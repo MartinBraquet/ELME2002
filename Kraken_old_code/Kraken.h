@@ -43,7 +43,42 @@
 	 */ 
 	 CAN *can;
 	 SPI *spi;
-
+	 
+	
+	/*
+	 * Motion 
+	 */
+	 
+	//Variables used to define the physical measure
+	////////////////////////////////////////////////
+	double wheel_radius;
+	double wheel_width; 
+	
+	//Variables used to store computed informations
+	////////////////////////////////////////////////
+	double angle_left_wheel;
+	double angle_right_wheel;
+	double motor_speed_left_wheel;
+	double motor_speed_right_wheel;
+	double odometer_speed_right_wheel;
+	double odometer_speed_right_wheel;
+	
+	// General variable to keep track of the current location
+	PositionMapping* currentLocation;
+	// General variable to keep track of location to reach
+	PIcontroller* angularPositionPI;
+	PIcontroller* linearPositionPI;
+	TrajectoryTracker* tracker;
+	// Structure needed for the wheel motor controle
+	CtrlStruct* theCtrlStruct;
+	
+	
+	
+	/*
+	 * Here below you can add other features to the kraken for others field than the motion control
+	 */
+	 
+	//....
 }Kraken;
 
 void init_Kraken(Kraken* myKraken);
