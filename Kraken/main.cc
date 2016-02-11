@@ -3,85 +3,80 @@
 #include <stdlib.h>
 #include <wiringPi.h>
 #include <wiringPiSPI.h>
-#include "Kraken.h"
+#include "ctrl_main_gr3.h"
+#include "CtrlStruct_gr3.h"
+#include "regulation/speed_controller_gr3.h"
 
 int main()
 {
-	// printf("hello world\n");
+	/*
+	printf("hello world\n");
 	printf("##############################################################################################################\n");
     	printf("\t\t\tWelcome to the project of the ELME2002 class :)");
     	printf("##############################################################################################################\n");
     	printf("\t\t I'm Kraken, please take care of me !\n");
-  
-	
+  	*/
+
 	// Initialisation the robot
-	Kraken* kraken = (Kraken*) malloc(sizeof(Kraken));
-	init_Kraken(kraken);
+        CtrlIn *inputs = (CtrlIn*) malloc(sizeof(CtrlIn));
+        CtrlOut *outputs = (CtrlOut*) malloc(sizeof(CtrlOut));
+	CtrlStruct *cvs = init_CtrlStruct(inputs, outputs);
+	controller_init(cvs);
 	printf("Kraken fully initialized \n");
-	
+
 	unsigned char buffer[100];
-	double omega_ref[2] = {0,0}; 
-	
+
 	//setup the motor
-	kraken->can->ctrl_motor(0);
-	kraken->can->push_PropDC(20, 20);
-	
+	cvs->can->ctrl_motor(1);
+
 	while(true)
 	{
 		delay(1);  //delay for the controller
-		
-		
+
+
 		//Data from motor encoders
-		//Speed		
-		buffer[0] = 0x04; // motor encoder right wheel	
+		//Speed
+		buffer[0] = 0x04; //encoder left wheel
 	   	wiringPiSPIDataRW(channel, buffer, 5);
-		kraken->speed_right_wheel = compute_speed_wheel_motor(kraken->spi->frombytes(5, buffer)); 
-		printf("speed  R %lf \n", kraken->speed_right_wheel);
-		
-		buffer[0] = 0x05; // motor encoder left wheel	
+		cvs->inputs->r_wheel_speed = compute_speed_wheel_motor(cvs->spi->frombytes(5, buffer));
+		printf("vitesse  R %lf \n", cvs->inputs->r_wheel_speed);
+
+		buffer[0] = 0x05; //encoder left wheel
 	   	wiringPiSPIDataRW(channel, buffer, 5);
-	   	kraken->speed_left_wheel = compute_speed_wheel_motor(kraken->spi->frombytes(5, buffer));
-		printf("speed  L %lf \n", kraken->speed_left_wheel);
-		
-		kraken->theCtrlStruct->theCtrlIn->l_wheel_speed = kraken->speed_left_wheel; //data  taken from the SPI
-		kraken->theCtrlStruct->theCtrlIn->r_wheel_speed = kraken->speed_right_wheel;
-		
-		omega_ref[0] = 8;
-		omega_ref[1] = 8;
-		
-		run_speed_controller(kraken->theCtrlStruct, omega_ref); 
-		kraken->can->push_PropDC(kraken->theCtrlStruct->theCtrlOut->wheel_commands[R_ID], kraken->theCtrlStruct->theCtrlOut->wheel_commands[L_ID]);
-		//kraken->can->push_PropDC(20,20);
-		
+	   	cvs->inputs->l_wheel_speed = compute_speed_wheel_motor(cvs->spi->frombytes(5, buffer));
+		printf("vitesse  L %lf \n", cvs->inputs->l_wheel_speed);
+
+		controller_loop(cvs);
+		cvs->can->push_PropDC(cvs->outputs->wheel_commands[R_ID], cvs->outputs->wheel_commands[L_ID]);
+		//robot->can->push_PropDC(20,20);
+
 		//Data from motor encoders
-		//Speed		
-		
-	
+		//Speed
+		/*
+
 		//Pour le moment avec les encodeurs du moteur mais à changer avec les encodeurs odométriques
-		buffer[0] = 0x00; //encoder right wheel	
+		buffer[0] = 0x00; //encoder left wheel
 	   	wiringPiSPIDataRW(channel, buffer, 5);
-		kraken->odometer_speed_right_wheel = compute_speed_wheel_motor(kraken->spi->frombytes(5, buffer)); 
-		//printf("speed  R %lf \n",kraken->speed_right_wheel);
-		
-		buffer[0] = 0x01; //encoder left wheel	
+		robot->angle_right_wheel = compute_speed_wheel_motor(robot->spi->frombytes(5, buffer));
+		//printf("vitesse  R %lf \n",robot->speed_right_wheel);
+
+		buffer[0] = 0x01; //encoder left wheel
 	   	wiringPiSPIDataRW(channel, buffer, 5);
-	   	kraken->odometer_speed_left_wheel = compute_speed_wheel_motor(kraken->spi->frombytes(5, buffer));
-		//printf("speed  L %lf \n", kraken->speed_left_wheel);
-		
+	   	robot->angle_left_wheel = compute_speed_wheel_motor(robot->spi->frombytes(5, buffer));
+		//printf("vitesse  L %lf \n",robot->speed_left_wheel);
+
 		//to compute where the robot is on the map
-		run_mapping(kraken->currentLocation, kraken->odometer_speed_left_wheel, kraken->odometer_speed_right_wheel);
-		print_mapping(kraken->currentLocation);
-		
+		run_mapping(robot->currentLocation,robot->angle_left_wheel,robot->angle_right_wheel);
+		print_mapping(robot->currentLocation);
+
 		//to compute where the robot needs to go
-		run_trajectoryTracker(kraken->tracker, omega_ref); 
+		run_trajectoryTracker(robot->tracker,omega_ref); */
 	}
-	
-    kraken->can->push_PropDC(10,10);
-	free_Kraken(kraken);
+
+
+        controller_finish(cvs);
+	free_CtrlStruct(cvs);
 	printf("Kraken freed");
 	return 0;
-	
+
 }
-
-
-

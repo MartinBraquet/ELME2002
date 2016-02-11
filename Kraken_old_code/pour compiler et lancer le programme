@@ -1,0 +1,1 @@
+g++ main.cc -lwiringPi Kraken.c IO/COM/SPI/SPI.cc IO/COM/CAN/CAN.cc IO/COM/SPI/Specific/SPI_CAN.cc Motor_control/speed_controller.c Direction_control/direction_controller.c Direction_control/mappingPosition.c Direction_control/trajectoryTracker.c -o main && ./main
