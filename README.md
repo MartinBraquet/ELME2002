@@ -1,5 +1,6 @@
-# ELME2002
+## ELME2002
 Code of the group 3 for the course ELME2002 in UCLouvain (EPL).
+
 
 Group composed by:
 - Martin Braquet
@@ -8,3 +9,5 @@ Group composed by:
 - Valentin Sokolow
 - Arthur Tasca
 - Antoine Winant
+
+
