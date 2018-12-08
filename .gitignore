@@ -1,5 +1,7 @@
-*/db/*
-*/incremental_db/*
+**/db/**
+**/incremental_db/**
+**/simulation/**
+**/greybox_tmp/**
 *.rpt
 *.done
 *.smsg
@@ -7,7 +9,6 @@
 **htm
 *.jdi
 *.pin
-*.sdc
 *.sld
 *.bak
 *.qdf
