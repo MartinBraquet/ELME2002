@@ -134,7 +134,7 @@ input 		     [1:0]		GPIO_1_IN;
 //logic UART_TX, UART_RX, UART_DIR;
 
 // Assignation entre les pins du GPIO 1 et GPIO 0 pour pouvoir connecter le tout au raspberry
-//assign GPIO_0_PI[1] = GPIO_1[8]; //laserSignal 
+assign GPIO_0_PI[1] = GPIO_1[8]; //laserSignal 
 //assign GPIO_0_PI[3] = GPIO_1[7]; //laserSync
 //assign GPIO_0_PI[5] = GPIO_1[4]; //laserCodeA
 //assign GPIO_0_PI[7] = GPIO_1[5]; //laserCodeB
@@ -185,12 +185,15 @@ assign GPIO_0_PI[13] = spi_cs ? 1'bz : spi_miso;  // MISO = pin 18 = GPIO_13
 //=======================================================
 
 logic [31:0]	enc_counterLEFT, enc_counterRIGHT;
-logic 			reset_encLEFT, reset_encRIGHT;
+logic 			reset_encLEFT, reset_encRIGHT,reset_encL;
 // for testing on Motor A
 quadrature_decoder encoder_decoderLEFT(CLOCK_50, reset_encA, GPIO_1[0], GPIO_1_IN[0], enc_counterLEFT);
 
 // for testing on Motor B
 quadrature_decoder encoder_decoderRIGHT(CLOCK_50, reset_encB, GPIO_1[2], GPIO_1[1], enc_counterRIGHT);
+
+// for testing on Turret
+quadrature_decoder encoder_decoderL(CLOCK_50, reset_encB, GPIO_1[5], GPIO_1[4], enc_counterRIGHT);
 
 // for testing on lidar' motor: NORMALLY CONNECTED WITH USB TO THE RASP =)
 //quadrature_decoder encoder_decoderL(CLOCK_50, reset_encL, GPIO_1[4], GPIO_1[5], enc_counterL);
@@ -237,10 +240,10 @@ always_comb
 	case(DataAdrM[5:2]) 
 		3'd0:  WriteDataM = 32'd0; //{31'd0, GPIO_1[8]}; // laserSinal R0        
 		3'd1:  WriteDataM = 32'd1; //{31'd0, GPIO_1[7]}; // laserSync  R1	
-		3'd2:  WriteDataM = 32'd2; //{31'd0, GPIO_1[5]}; // lasercodeA R2
-		3'd3:  WriteDataM = 32'd3; //{31'd0, GPIO_1[4]}; // laserCodeB R3
-		3'd4:  WriteDataM = 32'd4; //enc_counterLEFT; 		 // motor left wheel R4
-		3'd5:  WriteDataM = 32'd5; //enc_counterRIGHT;		 // motor right wheel R5
+		3'd2:  WriteDataM = 32'd2; //encoder_decoderL 		// plateau de la tourelle
+		3'd3:  WriteDataM = 32'd4; //enc_counterLEFT; 		 // motor left wheel R4
+		3'd4:  WriteDataM = 32'd5; //enc_counterRIGHT;		 // motor right wheel R5
+		//3'd5:  WriteDataM =
 		//3'd6:  WriteDataM = 
 		// 3'd7:  WriteDataM = 
 		// 3'd8:  WriteDataM = 
@@ -256,14 +259,14 @@ always_comb
 
 logic reset_encLEFT_SPI;
 logic reset_encRIGHT_SPI;
-//logic reset_encL_SPI;
+logic reset_encL_SPI;
 
 // This code updates the data from the input register in mosiRAM with counter
 always_ff @(posedge clk)
 	case(DataAdrM[5:2])
 		3'd0:  reset_encLEFT_SPI = ReadDataM[0]; // reset signal for the encA R0        
 		3'd1:  reset_encRIGHT_SPI = ReadDataM[0]; // reset signal for the encB R1
-		//3'd2:  reset_encL_SPI = ReadDataM[0]; // reset signal for the encL R2
+		3'd2:  reset_encL_SPI = ReadDataM[0]; // reset signal for the encL R2
 	endcase
 	
 always_ff @ (posedge clk, posedge reset) 
@@ -272,14 +275,14 @@ always_ff @ (posedge clk, posedge reset)
 			LED = 8'hff;
 			reset_encLEFT = 1;
 			reset_encRIGHT = 1;
-			//reset_encL = 1;
+			reset_encL = 1;
 		end		
 	else
 		begin 
 			LED = led_reg;
 			reset_encLEFT = reset_encLEFT_SPI;
 			reset_encRIGHT = reset_encRIGHT_SPI;
-			//reset_encL = reset_encL_SPI;
+			reset_encL = reset_encL_SPI;
 		end
 	
 endmodule
