@@ -282,7 +282,7 @@ always_ff @ (posedge clk, posedge reset)
 			LED = led_reg;
 			reset_enc_LEFT_WHEEL = reset_enc_LEFT_WHEEL_SPI;
 			reset_enc_RIGHT_WHEEL = reset_enc_RIGHT_WHEEL_SPI;
-			reset_enc_TURRET = reset_enc_TURRET_SPI;
+			reset_enc_TURRET = (reset_enc_TURRET_SPI|~GPIO_1[7]); //reset soit par SPI soit par le capteur ~car toujours a 1 sauf si detecté(cassé pour le moment);
 		end
 	
 endmodule
