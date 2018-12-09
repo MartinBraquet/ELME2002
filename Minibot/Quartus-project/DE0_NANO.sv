@@ -134,8 +134,9 @@ input 		     [1:0]		GPIO_1_IN;
 //logic UART_TX, UART_RX, UART_DIR;
 
 // Assignation entre les pins du GPIO 1 et GPIO 0 pour pouvoir connecter le tout au raspberry
+// Used for 1-bit data, because the SPI communication is not worth in this case
 assign GPIO_0_PI[1] = GPIO_1[8]; //laserSignal 
-//assign GPIO_0_PI[3] = GPIO_1[7]; //laserSync
+assign GPIO_0_PI[3] = GPIO_1[7]; //laserSync
 //assign GPIO_0_PI[5] = GPIO_1[4]; //laserCodeA
 //assign GPIO_0_PI[7] = GPIO_1[5]; //laserCodeB
 
@@ -160,7 +161,7 @@ logic	spi_clk, spi_cs, spi_mosi, spi_miso;
 logic MemWriteM;
 logic [31:0] DataAdrM, WriteDataM, spi_data;
 
-assign MemWriteM = 1; //This is use to always update the value from the output register.
+assign MemWriteM = 1; //This is used to always update the value from the output register.
 
 spi_slave spi_slave_instance(
 	.SPI_CLK    (spi_clk),
@@ -184,24 +185,23 @@ assign GPIO_0_PI[13] = spi_cs ? 1'bz : spi_miso;  // MISO = pin 18 = GPIO_13
 //  Encoder declaration
 //=======================================================
 
-logic [31:0]	enc_counterLEFT, enc_counterRIGHT;
-logic 			reset_encLEFT, reset_encRIGHT,reset_encL;
-// for testing on Motor A
-quadrature_decoder encoder_decoderLEFT(CLOCK_50, reset_encA, GPIO_1[0], GPIO_1_IN[0], enc_counterLEFT);
+logic [31:0]	enc_counterLEFT_WHEEL, enc_counterRIGHT_WHEEL, enc_counterTURRET;
+logic 			reset_encLEFT_WHEEL, reset_encRIGHT_WHEEL;
 
-// for testing on Motor B
-quadrature_decoder encoder_decoderRIGHT(CLOCK_50, reset_encB, GPIO_1[2], GPIO_1[1], enc_counterRIGHT);
+// LEFT motor position
+quadrature_decoder encoder_decoderLEFT_WHEEL(CLOCK_50, reset_enc_LEFT_WHEEL, GPIO_1[0], GPIO_1_IN[0], enc_counter_LEFT_WHEEL);
 
-// for testing on Turret
-quadrature_decoder encoder_decoderL(CLOCK_50, reset_encB, GPIO_1[5], GPIO_1[4], enc_counterRIGHT);
+// RIGHT motor position
+quadrature_decoder encoder_decoderRIGHT_WHEEL(CLOCK_50, reset_enc_RIGHT_WHEEL, GPIO_1[2], GPIO_1[1], enc_counter_RIGHT_WHEEL);
 
-// for testing on lidar' motor: NORMALLY CONNECTED WITH USB TO THE RASP =)
-//quadrature_decoder encoder_decoderL(CLOCK_50, reset_encL, GPIO_1[4], GPIO_1[5], enc_counterL);
+// TURRET motor position
+quadrature_decoder encoder_decoderTURRET(CLOCK_50, reset_enc_TURRET, GPIO_1[4], GPIO_1[5], enc_counter_TURRET);
 
 
 //=======================================================
-//  Action to be done
+//  Actions to be done
 //=======================================================
+
 logic clk,reset;
 logic [31:0] ReadDataM;
 logic [7:0] led_reg;
@@ -215,8 +215,8 @@ assign led_reg[3] = GPIO_1[5];
 assign led_reg[2] = GPIO_1[4];
 
 //Reset Signal
-assign led_reg[1] = reset_encLEFT_SPI;
-assign led_reg[0] = reset_encRIGHT_SPI;
+assign led_reg[1] = reset_enc_LEFT_WHEEL_SPI;
+assign led_reg[0] = reset_enc_RIGHT_WHEEL_SPI;
 
 // Chip Select logic	
 // For the moment we only use SPI, need a logic if we want to read a value from an input register
@@ -238,13 +238,13 @@ counter SpiCounter(clk, reset, registerCount);
 // This code updates the data on the registers in misoRAM with counter
 always_comb
 	case(DataAdrM[5:2]) 
-		3'd0:  WriteDataM = 32'd0; //{31'd0, GPIO_1[8]}; // laserSinal R0        
-		3'd1:  WriteDataM = 32'd1; //{31'd0, GPIO_1[7]}; // laserSync  R1	
-		3'd2:  WriteDataM = 32'd2; //encoder_decoderL 		// plateau de la tourelle
-		3'd3:  WriteDataM = 32'd4; //enc_counterLEFT; 		 // motor left wheel R4
-		3'd4:  WriteDataM = 32'd5; //enc_counterRIGHT;		 // motor right wheel R5
-		//3'd5:  WriteDataM =
-		//3'd6:  WriteDataM = 
+		3'd0:  WriteDataM = 32'd2; //enc_counter_TURRET; 		// turret position R0
+		3'd1:  WriteDataM = 32'd4; //enc_counter_LEFT_WHEEL; 	// motor left wheel position R1
+		3'd2:  WriteDataM = 32'd3; //enc_counter_RIGHT_WHEEL;	// motor right wheel position R2
+		// 3'd3:  WriteDataM = 
+		// 3'd4:  WriteDataM = 
+		// 3'd5:  WriteDataM = 
+		// 3'd6:  WriteDataM = 
 		// 3'd7:  WriteDataM = 
 		// 3'd8:  WriteDataM = 
 		// 3'd9:  WriteDataM = 
@@ -252,37 +252,37 @@ always_comb
 		// 3'd11:  WriteDataM = 
 		// 3'd12:  WriteDataM = 
 		// 3'd13:  WriteDataM = 
-		// 3'd14:  WriteDataM = 
-		// 3'd15:  WriteDataM = 
+		3'd14:  WriteDataM = 32'd14; //{31'd0, GPIO_1[8]}; // laserSinal R0 (normally transfered directly to the PI)    
+		3'd15:  WriteDataM = 32'd15; //{31'd0, GPIO_1[7]}; // laserSync  R1 (normally transfered directly to the PI) 
 		default: WriteDataM = 32'h00000000;
 	endcase
 
-logic reset_encLEFT_SPI;
-logic reset_encRIGHT_SPI;
-logic reset_encL_SPI;
+logic reset_enc_LEFT_WHEEL_SPI;
+logic reset_enc_RIGHT_WHEEL_SPI;
+logic reset_enc_TURRET_SPI;
 
 // This code updates the data from the input register in mosiRAM with counter
 always_ff @(posedge clk)
 	case(DataAdrM[5:2])
-		3'd0:  reset_encLEFT_SPI = ReadDataM[0]; // reset signal for the encA R0        
-		3'd1:  reset_encRIGHT_SPI = ReadDataM[0]; // reset signal for the encB R1
-		3'd2:  reset_encL_SPI = ReadDataM[0]; // reset signal for the encL R2
+		3'd0:  reset_enc_TURRET_SPI = ReadDataM[0]; // reset signal for the TURRET R0
+		3'd1:  reset_enc_LEFT_WHEEL_SPI = ReadDataM[0]; // reset signal for the LEFT wheel R1      
+		3'd2:  reset_enc_RIGHT_WHEEL_SPI = ReadDataM[0]; // reset signal for the RIGHT wheel R2
 	endcase
 	
 always_ff @ (posedge clk, posedge reset) 
 	if (reset)
 		begin // Reset the counter and light on all the led to see that it is well reset
 			LED = 8'hff;
-			reset_encLEFT = 1;
-			reset_encRIGHT = 1;
-			reset_encL = 1;
+			reset_enc_LEFT_WHEEL = 1;
+			reset_enc_RIGHT_WHEEL = 1;
+			reset_enc_TURRET = 1;
 		end		
 	else
 		begin 
 			LED = led_reg;
-			reset_encLEFT = reset_encLEFT_SPI;
-			reset_encRIGHT = reset_encRIGHT_SPI;
-			reset_encL = reset_encL_SPI;
+			reset_enc_LEFT_WHEEL = reset_enc_LEFT_WHEEL_SPI;
+			reset_enc_RIGHT_WHEEL = reset_enc_RIGHT_WHEEL_SPI;
+			reset_enc_TURRET = reset_enc_TURRET_SPI;
 		end
 	
 endmodule
@@ -300,4 +300,4 @@ always_ff @(posedge clk, posedge reset)
 		counter <= counter + 1;
 	
 endmodule
-					
+		
