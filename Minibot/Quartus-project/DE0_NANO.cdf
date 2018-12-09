@@ -4,7 +4,7 @@ JedecChain;
 	DefaultMfr(6E);
 
 	P ActionCode(Cfg)
-		Device PartName(EP4CE22F17) Path("/home/martin/Downloads/software/minibot/minibot_V1/") File("DE0_NANO.sof") MfrSpec(OpMask(1));
+		Device PartName(EP4CE22F17) Path("/home/martin/Documents/UCL/Q7/LELME2002 - Project in mechatronics/ELME2002/Minibot/Quartus-project/") File("DE0_NANO.sof") MfrSpec(OpMask(1));
 
 ChainEnd;
 
