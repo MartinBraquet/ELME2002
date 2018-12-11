@@ -189,13 +189,30 @@ logic [31:0]	enc_counter_LEFT_WHEEL, enc_counter_RIGHT_WHEEL, enc_counter_TURRET
 logic 			reset_enc_LEFT_WHEEL, reset_enc_RIGHT_WHEEL, reset_enc_TURRET;
 
 // LEFT motor position
-quadrature_decoder encoder_decoderLEFT_WHEEL(CLOCK_50, reset_enc_LEFT_WHEEL, GPIO_1[0], GPIO_1_IN[0], enc_counter_LEFT_WHEEL);
+quadrature_decoder encoder_decoderLEFT_WHEEL(CLOCK_50, reset_enc_LEFT_WHEEL, GPIO_1[1], GPIO_1[2], enc_counter_LEFT_WHEEL);
 
 // RIGHT motor position
-quadrature_decoder encoder_decoderRIGHT_WHEEL(CLOCK_50, reset_enc_RIGHT_WHEEL, GPIO_1[2], GPIO_1[1], enc_counter_RIGHT_WHEEL);
+quadrature_decoder encoder_decoderRIGHT_WHEEL(CLOCK_50, reset_enc_RIGHT_WHEEL, GPIO_1[0], GPIO_1_IN[0], enc_counter_RIGHT_WHEEL);
 
 // TURRET motor position : 7200 per turn
 quadrature_decoder encoder_decoderTURRET(CLOCK_50, reset_enc_TURRET, GPIO_1[4], GPIO_1[5], enc_counter_TURRET);
+
+
+//=======================================================
+//  Speed computations
+//=======================================================
+
+logic [31:0]	speed_LEFT_WHEEL, speed_RIGHT_WHEEL, speed_TURRET;
+logic 			reset_speed_LEFT_WHEEL, reset_speed_RIGHT_WHEEL, reset_speed_TURRET;
+
+// LEFT motor position
+rotation_speed rotation_speedLEFT_WHEEL(CLOCK_50, reset_speed_LEFT_WHEEL, enc_counter_LEFT_WHEEL, speed_LEFT_WHEEL);
+
+// RIGHT motor position
+rotation_speed rotation_speedRIGHT_WHEEL(CLOCK_50, reset_speed_RIGHT_WHEEL, enc_counter_RIGHT_WHEEL, speed_RIGHT_WHEEL);
+
+// TURRET motor position : 7200 per turn
+rotation_speed rotation_speedTURRET(CLOCK_50, reset_speed_TURRET, enc_counter_TURRET, speed_TURRET);
 
 
 //=======================================================
@@ -213,12 +230,13 @@ assign MemWriteM = 1'b1;
 //Signaux de la tourelle assignés au led
 //assign led_reg[3] = GPIO_1[5];
 //assign led_reg[2] = GPIO_1[4];
+//assign led_reg[2] = GPIO_1[7];
 
 //Reset Signal
-assign led_reg[1] = reset_enc_LEFT_WHEEL_SPI;
+//assign led_reg[1] = reset_enc_LEFT_WHEEL_SPI;
 assign led_reg[0] = reset_enc_TURRET_SPI;
 
-//assign led_reg = enc_counter_TURRET[27:20];
+//assign led_reg = count[24:17];
 
 // Chip Select logic
 // For the moment we only use SPI, need a logic if we want to read a value from an input register
@@ -243,9 +261,9 @@ always_comb
 		4'd0:  WriteDataM = enc_counter_TURRET; 		// turret position R0
 		4'd1:  WriteDataM = enc_counter_LEFT_WHEEL; 	// motor left wheel position R1
 		4'd2:  WriteDataM = enc_counter_RIGHT_WHEEL;	// motor right wheel position R2
-		4'd3:  WriteDataM = {31'd0, GPIO_1[4]};
-		4'd4:  WriteDataM = {31'd0, GPIO_1[5]};
-		// 4'd5:  WriteDataM = 
+		4'd3:  WriteDataM = speed_TURRET;
+		4'd4:  WriteDataM = speed_LEFT_WHEEL;
+		4'd5:  WriteDataM = speed_RIGHT_WHEEL;
 		// 4'd6:  WriteDataM = 
 		// 4'd7:  WriteDataM = 
 		// 4'd8:  WriteDataM = 
@@ -275,9 +293,12 @@ always_ff @ (posedge clk, posedge reset)
 	if (reset)
 		begin // Reset the counter and light on all the led to see that it is well reset
 			LED = 8'hff;
-			reset_enc_LEFT_WHEEL = 1;
-			reset_enc_RIGHT_WHEEL = 1;
-			reset_enc_TURRET = 1;
+			reset_enc_LEFT_WHEEL = 1'b1;
+			reset_enc_RIGHT_WHEEL = 1'b1;
+			reset_enc_TURRET = 1'b1;
+			reset_speed_LEFT_WHEEL = 1'b1;
+			reset_speed_RIGHT_WHEEL = 1'b1;
+			reset_speed_TURRET = 1'b1;
 		end		
 	else
 		begin 
@@ -285,6 +306,9 @@ always_ff @ (posedge clk, posedge reset)
 			reset_enc_LEFT_WHEEL = reset_enc_LEFT_WHEEL_SPI;
 			reset_enc_RIGHT_WHEEL = reset_enc_RIGHT_WHEEL_SPI;
 			reset_enc_TURRET = (reset_enc_TURRET_SPI|~GPIO_1[7]); // reset soit par SPI soit par le capteur;
+			reset_speed_LEFT_WHEEL = 1'b0;
+			reset_speed_RIGHT_WHEEL = 1'b0;
+			reset_speed_TURRET = 1'b0;
 		end
 	
 endmodule
