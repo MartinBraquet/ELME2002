@@ -136,6 +136,7 @@ input 		     [1:0]		GPIO_1_IN;
 // Used for 1-bit data, because the SPI communication is not worth in this case
 assign GPIO_0_PI[1] = GPIO_1[8]; //laserSignal 
 assign GPIO_0_PI[3] = GPIO_1[7]; //laserSync
+
 //assign GPIO_0_PI[5] = GPIO_1[4]; //laserCodeA
 //assign GPIO_0_PI[7] = GPIO_1[5]; //laserCodeB
 
@@ -197,6 +198,18 @@ quadrature_decoder encoder_decoderRIGHT_WHEEL(CLOCK_50, reset_enc_RIGHT_WHEEL, G
 // TURRET motor position : 7200 per turn
 quadrature_decoder encoder_decoderTURRET(CLOCK_50, reset_enc_TURRET, GPIO_1[4], GPIO_1[5], enc_counter_TURRET);
 
+
+
+//=======================================================
+//  Oject detection and angle computations
+//=======================================================
+logic[31:0] angleIn,angleOut,deltaAngle,angleTargeted;
+always_ff@(posedge GPIO_1[8])
+angleOut <= enc_counter_TURRET;
+
+
+always_ff@(negedge GPIO_1[8])
+angleIn <= enc_counter_TURRET;
 
 //=======================================================
 //  Speed computations
@@ -264,8 +277,8 @@ always_comb
 		4'd3:  WriteDataM = speed_TURRET;
 		4'd4:  WriteDataM = speed_LEFT_WHEEL;
 		4'd5:  WriteDataM = speed_RIGHT_WHEEL;
-		// 4'd6:  WriteDataM = 
-		// 4'd7:  WriteDataM = 
+		4'd6:  WriteDataM = angleIn; 					//angle measured on the beacon
+	   4'd7:  WriteDataM = angleOut;
 		// 4'd8:  WriteDataM = 
 		// 4'd9:  WriteDataM = 
 		// 4'd10:  WriteDataM = 
@@ -305,7 +318,8 @@ always_ff @ (posedge clk, posedge reset)
 			LED = led_reg;
 			reset_enc_LEFT_WHEEL = reset_enc_LEFT_WHEEL_SPI;
 			reset_enc_RIGHT_WHEEL = reset_enc_RIGHT_WHEEL_SPI;
-			reset_enc_TURRET = (reset_enc_TURRET_SPI|~GPIO_1[7]); // reset soit par SPI soit par le capteur;
+			reset_enc_TURRET = reset_enc_TURRET_SPI; // reset soit par SPI soit par le capteur;
+			//reset_enc_TURRET = (reset_enc_TURRET_SPI|~GPIO_1[7]); // reset soit par SPI soit par le capteur;
 			reset_speed_LEFT_WHEEL = 1'b0;
 			reset_speed_RIGHT_WHEEL = 1'b0;
 			reset_speed_TURRET = 1'b0;
