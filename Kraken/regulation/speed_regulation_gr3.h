@@ -7,6 +7,7 @@
 #define _SPEED_REGULATION_GR3_H_ 
  
 #include "../CtrlStruct_gr3.h"
+#include "speed_controller_gr3.h"
 
 #if ROBOTICS_COURSE
     #include "namespace_ctrl.h"

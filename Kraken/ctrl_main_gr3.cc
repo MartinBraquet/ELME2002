@@ -10,7 +10,6 @@
 #include <time.h>
 #include <ctime>
 #include <cmath>
-
 #include "localization/init_pos_gr3.h"
 #include "localization/odometry_gr3.h"
 #include "localization/opp_pos_gr3.h"
@@ -21,11 +20,6 @@
 #include "path/path_planning_gr3.h"
 #include "simu_game_gr3.h"
 
-#if ROBOTICS_COURSE
-    #include "user_realtime.h"
-    #include "namespace_ctrl.h"
-    NAMESPACE_INIT(ctrlGr3);
-#endif
 
 /*! \brief initialize controller operations (called once)
  * 
@@ -41,6 +35,7 @@ void controller_init(CtrlStruct *cvs)
 
 	// variables initialization
 	inputs = cvs->inputs;
+	inputs->t = 0.0;
 	t = inputs->t;
 
 	/*
@@ -52,7 +47,7 @@ void controller_init(CtrlStruct *cvs)
 	{
 		printf("error : unable to set the GPI from the raspberry \n");
 	}
-
+ 
 	//Pin reset of the FPGA at the start.
 	pinMode(resetPin,OUTPUT);
 	digitalWrite(resetPin,HIGH);
@@ -64,13 +59,12 @@ void controller_init(CtrlStruct *cvs)
 	cvs->can->configure();
 
 	//Set the SPI bus
-	cvs->spi;
 	int fd = wiringPiSPISetup(channel, clockSpi);
 	printf("SPI setup: %d \n",fd);
 
 
 	// robot position
-	set_init_position(cvs->robot_id, cvs->rob_pos);
+	set_init_position(cvs->robot_team, cvs->rob_pos);
 	cvs->rob_pos->last_t = t;
 
 	// speed regulation
@@ -81,6 +75,8 @@ void controller_init(CtrlStruct *cvs)
 
 	// Map initialization
 	init_path_planning(cvs);
+
+
 }
 
 /*! \brief controller loop (called every timestep)
@@ -97,11 +93,14 @@ void controller_loop(CtrlStruct *cvs)
 	cvs->outputs->tower_command = cvs->py_outputs->tower_command;
 	*/
 	
-	printf("l_wheel_speed:%f [rad/s] ; r_wheel_speed:%f [rad/s]\n", cvs->inputs->l_wheel_speed, cvs->inputs->r_wheel_speed);
+	// printf("l_wheel_speed:%f [rad/s] ; r_wheel_speed:%f [rad/s]\n", cvs->inputs->odo_l_wheel_speed, cvs->inputs->odo_r_wheel_speed);
+	
+	//printf("ODOMETER: x = %1.3f ; y = %1.3f ; theta = %1.3f \n", cvs->rob_pos->x, cvs->rob_pos->y, cvs->rob_pos->theta_odometer * 180 / M_PI);
+	
 	// variables declaration
 	double t;
 	CtrlIn  *inputs;
-	CtrlOut *outputs;
+	CtrlOut *outputs; 
 
 	// variables initialization
 	inputs  = cvs->inputs;
@@ -111,23 +110,25 @@ void controller_loop(CtrlStruct *cvs)
 
 	// update the robot odometry
 	update_odometry(cvs);
+	
+	cvs->rob_pos->x = cvs->rob_pos->x_odometer;
+	cvs->rob_pos->y = cvs->rob_pos->y_odometer;
+	cvs->rob_pos->theta = cvs->rob_pos->theta_odometer;
 
 	// opponents position detection with the tower
 	opponents_tower(cvs);
 
 	// tower control
 	outputs->tower_command = 0.0;
+	
+	//printf("main_state: %d\n", cvs->main_state);
 
 	switch (cvs->main_state)
 	{
-		case CALIB_STATE:
-			calibration(cvs);
-			break;
-
 		case WAIT_INIT_STATE:
 			speed_regulation(cvs, 0.0, 0.0);
 
-			if (t > 0.0)
+			if (t > 3.0)
 			{
 				cvs->main_state = RUN_STATE;
 			}
@@ -136,7 +137,7 @@ void controller_loop(CtrlStruct *cvs)
 		case RUN_STATE:
 			main_strategy(cvs);
 
-			if (t > 89.0)
+			if (t > 40.0)
 			{
 				cvs->main_state = STOP_END_STATE;
 			}

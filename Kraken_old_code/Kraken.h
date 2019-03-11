@@ -61,7 +61,7 @@
 	double motor_speed_left_wheel;
 	double motor_speed_right_wheel;
 	double odometer_speed_right_wheel;
-	double odometer_speed_right_wheel;
+	double odometer_speed_left_wheel;
 	
 	// General variable to keep track of the current location
 	PositionMapping* currentLocation;
