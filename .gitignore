@@ -14,3 +14,5 @@
 *.qdf
 *.qsf
 *.gch
+*.o
+Kraken/build/main

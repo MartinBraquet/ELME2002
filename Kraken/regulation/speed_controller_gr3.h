@@ -7,10 +7,6 @@
 
 #include "../CtrlStruct_gr3.h"
 
-#if ROBOTICS_COURSE
-    #include "namespace_ctrl.h"
-    NAMESPACE_INIT(ctrlGr3);
-#endif
 
 typedef struct Motor{
 
@@ -44,13 +40,11 @@ typedef struct MotorStruct{
 } MotorStruct;
 
 void init_speed_controller(CtrlStruct* cvs);
+void free_speed_controller(CtrlStruct* cvs);
 void run_speed_controller(CtrlStruct *cvs, double l_sp_ref, double r_sp_ref);
 int saturation(double *x, double xsat);
 double compute_angle_wheel_motor(int count);
 double compute_speed_wheel_motor(int speed);
 
-#if ROBOTICS_COURSE
-    NAMESPACE_CLOSE();
-#endif
 
 #endif //ifndef

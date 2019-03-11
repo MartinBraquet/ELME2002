@@ -1,4 +1,5 @@
 #include "init_pos_gr3.h"
+#include "../CtrlStruct_gr3.h"
 #include <math.h>
 
 #if ROBOTICS_COURSE
@@ -10,38 +11,36 @@
  * \param[in] robot_id robot ID
  * \param[out] rob_pos robot position structure
  */
-void set_init_position(int robot_id, RobotPosition *rob_pos)
+void set_init_position(int robot_team, RobotPosition *rob_pos)
 {
-	switch (robot_id)
+	switch (robot_team)
 	{
-		case ROBOT_B: // blue robot
+		case TEAM_YELLOW: // blue robot
 			rob_pos->x = 0.0;
 			rob_pos->y = 0.0;
 			rob_pos->theta = 0.0;
 			break;
 
-		case ROBOT_R: // red robot
-			rob_pos->x = 0.0;
-			rob_pos->y = 0.0;
-			rob_pos->theta = 0.0;
-			break;
-
-		case ROBOT_Y: // yellow robot
-			rob_pos->x = 0.0;
-			rob_pos->y = 0.0;
-			rob_pos->theta = 0.0;
-			break;
-
-		case ROBOT_W: // white robot
+		case TEAM_PURPLE: // red robot
 			rob_pos->x = 0.0;
 			rob_pos->y = 0.0;
 			rob_pos->theta = 0.0;
 			break;
 	
 		default:
-			printf("Initial position error: unknown robot ID: %d !\n", robot_id);
+			printf("Initial position error: unknown robot team: %d !\n", robot_team);
 			exit(EXIT_FAILURE);
-	}		
+	}	
+
+	rob_pos->x_odometer = 0.0;
+	rob_pos->y_odometer = 0.0;
+	rob_pos->theta_odometer  = 0.0;
+
+	rob_pos->odo_l_wheel_last_angle = 0.0;
+	rob_pos->odo_r_wheel_last_angle = 0.0;
+
+	rob_pos->last_t = 0.0;
+	
 }
 
 #if ROBOTICS_COURSE

@@ -23,7 +23,7 @@ int main()
 	double omega_ref[2] = {0,0}; 
 	
 	//setup the motor
-	kraken->can->ctrl_motor(0);
+	kraken->can->ctrl_motor(1);
 	kraken->can->push_PropDC(20, 20);
 	
 	while(true)
@@ -35,23 +35,23 @@ int main()
 		//Speed		
 		buffer[0] = 0x04; // motor encoder right wheel	
 	   	wiringPiSPIDataRW(channel, buffer, 5);
-		kraken->speed_right_wheel = compute_speed_wheel_motor(kraken->spi->frombytes(5, buffer)); 
-		printf("speed  R %lf \n", kraken->speed_right_wheel);
+		kraken->motor_speed_right_wheel = compute_speed_wheel_motor(kraken->spi->frombytes(5, buffer)); 
+		printf("speed  R %lf \n", kraken->motor_speed_right_wheel);
 		
 		buffer[0] = 0x05; // motor encoder left wheel	
 	   	wiringPiSPIDataRW(channel, buffer, 5);
-	   	kraken->speed_left_wheel = compute_speed_wheel_motor(kraken->spi->frombytes(5, buffer));
-		printf("speed  L %lf \n", kraken->speed_left_wheel);
+	   	kraken->motor_speed_left_wheel = compute_speed_wheel_motor(kraken->spi->frombytes(5, buffer));
+		printf("speed  L %lf \n", kraken->motor_speed_left_wheel);
 		
-		kraken->theCtrlStruct->theCtrlIn->l_wheel_speed = kraken->speed_left_wheel; //data  taken from the SPI
-		kraken->theCtrlStruct->theCtrlIn->r_wheel_speed = kraken->speed_right_wheel;
+		kraken->theCtrlStruct->theCtrlIn->l_wheel_speed = kraken->motor_speed_left_wheel; //data  taken from the SPI
+		kraken->theCtrlStruct->theCtrlIn->r_wheel_speed = kraken->motor_speed_right_wheel;
 		
 		omega_ref[0] = 8;
 		omega_ref[1] = 8;
 		
-		run_speed_controller(kraken->theCtrlStruct, omega_ref); 
-		kraken->can->push_PropDC(kraken->theCtrlStruct->theCtrlOut->wheel_commands[R_ID], kraken->theCtrlStruct->theCtrlOut->wheel_commands[L_ID]);
-		//kraken->can->push_PropDC(20,20);
+		//run_speed_controller(kraken->theCtrlStruct, omega_ref); 
+		//kraken->can->push_PropDC(kraken->theCtrlStruct->theCtrlOut->wheel_commands[R_ID], kraken->theCtrlStruct->theCtrlOut->wheel_commands[L_ID]);
+		kraken->can->push_PropDC(20,20);
 		
 		//Data from motor encoders
 		//Speed		

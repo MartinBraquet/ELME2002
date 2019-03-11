@@ -1,5 +1,5 @@
 #include "calibration_gr3.h"
-#include "speed_regulation_gr3.h"
+#include "../regulation/speed_regulation_gr3.h"
 
 #if ROBOTICS_COURSE
     NAMESPACE_INIT(ctrlGr3);
@@ -19,12 +19,12 @@ void calibration(CtrlStruct *cvs)
 
 	CtrlIn *inputs; ///< controller inputs
 	RobotCalibration *calib; ///< calibration structure
-	RobotPosition *rob_pos;  ///< robot position (to calibrate)
+	//RobotPosition *rob_pos;  ///< robot position (to calibrate)
 
 	// variables initialization
 	inputs  = cvs->inputs;
 	calib   = cvs->calib;
-	rob_pos = cvs->rob_pos;
+	//rob_pos = cvs->rob_pos;
 	
 	t = inputs->t;
 

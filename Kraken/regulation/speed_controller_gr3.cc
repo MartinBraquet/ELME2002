@@ -7,14 +7,10 @@
 #include "speed_controller_gr3.h"
 #include "speed_regulation_gr3.h"
 
-#if ROBOTICS_COURSE
-    #include "namespace_ctrl.h"
-    NAMESPACE_INIT(ctrlGr3);
-#endif
 
-// Angle of the wheel motors in degree
+// Angle of the wheel motors in rad
 double compute_angle_wheel_motor(int count){
-	return (count * 360 / 37750) % 360;
+	return (count * 360 / 37750) * M_PI / 180;
 }
 
 // Rotation speed of the motor wheels in rad/s: compute each 65536 cycles and the CLK is at 50 MHz
@@ -69,8 +65,8 @@ void run_speed_controller(CtrlStruct *cvs, double l_sp_ref, double r_sp_ref){
 	
 	// printf("Run speed controller\n");
 	double dt = cvs->inputs->t - cvs->sp_reg->last_t;
-	double Ua_left_out  = run_motor(cvs, cvs->motor_str->l_motor, l_sp_ref, cvs->inputs->l_wheel_speed, dt);
-	double Ua_right_out = run_motor(cvs, cvs->motor_str->r_motor, r_sp_ref, cvs->inputs->r_wheel_speed, dt);
+	double Ua_left_out  = run_motor(cvs, cvs->motor_str->l_motor, l_sp_ref, cvs->inputs->motor_enc_l_wheel_speed, dt);
+	double Ua_right_out = run_motor(cvs, cvs->motor_str->r_motor, r_sp_ref, cvs->inputs->motor_enc_r_wheel_speed, dt);
 	
 	cvs->outputs->wheel_commands[L_ID] = Ua_left_out * 100.0 / cvs->motor_str->Un;
 	cvs->outputs->wheel_commands[R_ID] = Ua_right_out * 100.0 / cvs->motor_str->Un;
@@ -83,25 +79,25 @@ void run_speed_controller(CtrlStruct *cvs, double l_sp_ref, double r_sp_ref){
 void init_speed_controller(CtrlStruct *cvs){
 
 	cvs->motor_str->Un = 24.0;
-	cvs->motor_str->In = 1.1;
-	cvs->motor_str->Nn = 4370.0;
-	cvs->motor_str->Ra = 5.78;
+	cvs->motor_str->In = 0.82;
+	cvs->motor_str->Nn = 4770.0;
+	cvs->motor_str->Ra = 5.84;
 	cvs->motor_str->R = 0.03;
 	//cvs->motor_str->kphi = 0.0261;
-	cvs->motor_str->kphi = 0.0346;
-	cvs->motor_str->red = 1.0;
+	cvs->motor_str->kphi = 0.03878;
+	cvs->motor_str->red = 19.0;
 
     cvs->motor_str->l_motor = (Motor*) malloc(sizeof(struct Motor));
     cvs->motor_str->r_motor = (Motor*) malloc(sizeof(struct Motor));
 	
-	cvs->motor_str->l_motor->Ki = 10; // 0.1194;
-	cvs->motor_str->l_motor->Kp = 0.0391;
+	cvs->motor_str->l_motor->Ki = 0.1190; // 0.1194;
+	cvs->motor_str->l_motor->Kp = 0.0397;
 	cvs->motor_str->l_motor->K = 1.0;
 	cvs->motor_str->l_motor->komega = 0.9998;
 	cvs->motor_str->l_motor->integral_error = 0.0;
 
-	cvs->motor_str->r_motor->Ki = 10; // 0.1194;
-	cvs->motor_str->r_motor->Kp = 0.0391;
+	cvs->motor_str->r_motor->Ki = 0.1190; // 0.1194;
+	cvs->motor_str->r_motor->Kp = 0.0397;
 	cvs->motor_str->r_motor->K = 1.0;
 	cvs->motor_str->r_motor->komega = 0.9998;
 	cvs->motor_str->r_motor->integral_error = 0.0;
@@ -109,6 +105,11 @@ void init_speed_controller(CtrlStruct *cvs){
 	return;
 }
 
-#if ROBOTICS_COURSE
-    NAMESPACE_CLOSE();
-#endif
+void free_speed_controller(CtrlStruct *cvs){
+
+    free(cvs->motor_str->l_motor);
+    free(cvs->motor_str->r_motor);
+
+	return;
+}
+

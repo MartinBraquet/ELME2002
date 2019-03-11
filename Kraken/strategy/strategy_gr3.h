@@ -1,5 +1,4 @@
 /*! 
- * \author Nicolas Van der Noot
  * \file strategy_gr3.h
  * \brief strategy during the game
  */
@@ -10,26 +9,23 @@
 #include "../CtrlStruct_gr3.h"
 #include <math.h>
 
-#if ROBOTICS_COURSE
-    NAMESPACE_INIT(ctrlGr3);
-#endif
 
 // strategy main states
 enum {STRAT_STATE_1, STRAT_STATE_2, STRAT_STATE_3};
+
+enum {MINI_STRAT_STRAIGHT_LINE, MINI_STRAT_ROTATE_LEFT, MINI_STRAT_STRAIGHT_LINE_BACK, MINI_STRAT_ROTATE_RIGHT, MINI_STRAT_WAIT_END};
 
 /// strategy
 typedef struct Strategy
 {
 	int state; ///< main state of the strategy
+	int mini_state;
 	
 } Strategy;
 
-// function prototype
+void init_strategy(CtrlStruct *cvs);
 void main_strategy(CtrlStruct *cvs);
-
-#if ROBOTICS_COURSE
-    NAMESPACE_CLOSE();
-#endif
+void round_trip(CtrlStruct *cvs, int mini_state);
 
 #endif
 

@@ -2,14 +2,19 @@
  * \file ctrl_io.h
  * \brief Structures defining the inputs and the outputs of the Minibot controller
  */
+
 #ifndef _CTRL_IO_H_
 #define _CTRL_IO_H_
+
+#include <sweep/sweep.h>
 
 // number of micro-switches
 #define NB_U_SWITCH 2
 
 // number of stored rising/falling edges
 #define NB_STORE_EDGE 10
+
+#define LIDAR_SAMPLES 1000
 
 // ID of the right and left sides
 enum{R_ID, L_ID};
@@ -26,8 +31,17 @@ typedef struct CtrlIn
 	 * Each wheel speed is positive when the robot is going forward (the front part of the robot is
 	 * the round part).
 	 */
-	double r_wheel_speed; ///< right wheel speed [rad/s]
-	double l_wheel_speed; ///< left wheel speed [rad/s]
+	double motor_enc_l_wheel_speed; ///< motor ancoder left wheel speed [rad/s]
+	double motor_enc_r_wheel_speed; ///< motor ancoder right wheel speed [rad/s]
+
+ 	double motor_enc_l_wheel_angle; ///< motor ancoder left wheel angle [rad]
+ 	double motor_enc_r_wheel_angle; ///< motor ancoder right wheel angle [rad]
+
+	double odo_l_wheel_speed; ///< odometer left wheel speed [rad/s]
+	double odo_r_wheel_speed; ///< odometer right wheel speed [rad/s]
+
+ 	double odo_l_wheel_angle; ///< odometer left wheel angle [rad]
+ 	double odo_r_wheel_angle; ///< odometer right wheel angle [rad]
 
 	/*! \brief micro-switches
 	 */
@@ -66,55 +80,13 @@ typedef struct CtrlIn
 	double last_rising[NB_STORE_EDGE];  ///< rotating list with the last rising edges detected [rad]
 	double last_falling[NB_STORE_EDGE]; ///< rotating list with the last falling edges detected [rad]
 
-	int rising_index;  ///< index in 'last_rising' of the last element added
-	int falling_index; ///< index in 'last_falling' of the last element added
 
-	int nb_rising;  ///< number of rising edges detected during the last laser revolution
-	int nb_falling; ///< number of falling edges detected during the last laser revolution
-
-	/*! \brief number of opponents taking part in this game
-	 */
-	int nb_opponents; ///< number of opponents
-
-	#ifdef SIMU_PROJECT
-	/*! \brief tower for the fixed beacon
-	 *
-	 * These variables are similar to the same ones without the '_fixed' name, except that
-	 * they only detect the fixed beacon placed at the border of the map.
-	 * Only the beacon of the corresponding team are detected.
-	 */
-	double last_rising_fixed[NB_STORE_EDGE];  ///< rotating list with the last rising edges detected [rad]
-	double last_falling_fixed[NB_STORE_EDGE]; ///< rotating list with the last falling edges detected [rad]
-
-	int rising_index_fixed;  ///< index in 'last_rising' of the last element added
-	int falling_index_fixed; ///< index in 'last_falling' of the last element added
-
-	int nb_rising_fixed;  ///< number of rising edges detected during the last laser revolution
-	int nb_falling_fixed; ///< number of falling edges detected during the last laser revolution
-
-	/*! \brief targets
-	 */
-	int nb_targets;      ///< number of targets carried by the robot
-	int target_detected; ///< 1 if target currently detected under the robot, 0 otherwise
-
-	/*! \brief joystick-keyboard
-	 */
-	int keyboard_arrow[2][2];     ///< arrows keyboard or (Z,Q,S,D / W,A,S,D) (signals in the range [-100;100], see user_realtime_events.cc)
-	double joystick_handle[4][2]; ///< joystick handle (signals in the range [-1;1])
-
-	int keyboard_key[2];    ///< keyboard keys (space bar and enter key, see user_realtime_events.cc)
-	int joystick_button[4]; ///< joystick buttons (depend on the joystick)
-
-	/*! \brief robot ID
-	 *
-	 * These are the following robots IDs (with their corresponding teams):
-	 *    ROBOT_B (blue)  : 0 - team A
-	 *    ROBOT_R (red)   : 1 - team A
-	 *    ROBOT_Y (yellow): 2 - team B
-	 *    ROBOT_W (white) : 3 - team B
-	 */
-	int robot_id; ///< ID of the robot
-	#endif
+	// LIDAR data
+	sweep_error_s error;
+	sweep_device_s sweep;
+	double lidar_angles[LIDAR_SAMPLES];
+	double lidar_distances[LIDAR_SAMPLES];
+	int lidar_signals[LIDAR_SAMPLES];
 
 } CtrlIn;
 
@@ -141,16 +113,6 @@ typedef struct CtrlOut
 	 * better to limit 'tower_command' in a range of [-15 ; 15].
 	 */
 	double tower_command; ///< tower motor command [-], bounded in [-100 ; 100]
-
-	#ifdef SIMU_PROJECT
-	/*! \brief targets release
-	 *
-	 * When this flag is set to 1, the robot automatically releases all the targets it is carrying.
-	 * Consequently, the robot cannot pick any target when this flag is set to 1.
-	 * Set this flag to 0 to carry targets.
-	 */
-	int flag_release;
-	#endif
 
 } CtrlOut;
 
