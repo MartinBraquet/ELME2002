@@ -1,0 +1,147 @@
+#include <cstdio>
+#include <stdio.h>
+#include <stdlib.h>
+#include <wiringPi.h>
+#include <wiringPiSPI.h>
+#include "CtrlStruct_gr3.h"
+#include "ctrl_main_gr3.h"
+#include "regulation/speed_controller_gr3.h"
+#include "regulation/speed_regulation_gr3.h"
+#include "localization/odometry_gr3.h"
+#include "localization/init_pos_gr3.h"
+#include "useful/mytime.h"
+
+
+int main()
+{
+	/*
+	printf("hello world\n");
+	printf("##############################################################################################################\n");
+    	printf("\t\t\tWelcome to the project of the ELME2002 class :)");
+    	printf("##############################################################################################################\n");
+    	printf("\t\t I'm Kraken, please take care of me !\n");
+  	*/
+
+	// Initialisation the robot
+
+FILE *fichier = fopen("results_test1.txt", "w+");
+
+
+    CtrlIn *inputs = (CtrlIn*) malloc(sizeof(CtrlIn));
+    CtrlOut *outputs = (CtrlOut*) malloc(sizeof(CtrlOut));
+	CtrlStruct *cvs = init_CtrlStruct(inputs, outputs);
+	controller_init(cvs);
+	printf("Kraken fully initialized \n");
+
+	unsigned char buffer[100];
+
+	//setup the motor
+	cvs->can->ctrl_motor(1);
+
+	//A SUPPRIMER
+	double angleRot = 0.0;
+	double angleLeft = 0.0;
+	double angleRight = 0.0;
+	double speedrefR=0.0;
+	double speedrefL=0.0;
+    int finish = 0;
+    double start_time = get_time();
+
+	while(cvs->inputs->t - start_time < 30)
+	{
+		
+		cvs->inputs->t = get_time() - start_time;
+
+		printf("Time: %f\n", cvs->inputs->t);
+
+        fprintf(fichier,"%lf ,%lf,%lf ,%lf ,%lf \n ", cvs->inputs->t,cvs->inputs->r_wheel_speed,cvs->inputs->l_wheel_speed,speedrefL,speedrefR);
+
+
+		//Data from motor encoders
+		//Speed
+		buffer[0] = 0x00; //encoder left wheel
+	   	wiringPiSPIDataRW(channel, buffer, 5);
+		angleRight =compute_angle_wheel_motor(cvs->spi->frombytes(5, buffer));
+		 //printf("angle r %lf \n",compute_angle_wheel_motor(cvs->spi->frombytes(5, buffer)));
+
+		buffer[0] = 0x01; //encoder left wheel
+	   	wiringPiSPIDataRW(channel, buffer, 5);
+		angleLeft = compute_angle_wheel_motor(cvs->spi->frombytes(5, buffer));
+		//printf("angle l %lf \n",compute_angle_wheel_motor(cvs->spi->frombytes(5, buffer)));
+
+		buffer[0] = 0x04; //encoder left wheel
+	   	wiringPiSPIDataRW(channel, buffer, 5);
+		cvs->inputs->r_wheel_speed = compute_speed_wheel_motor(cvs->spi->frombytes(5, buffer));
+		printf("vitesse  R %lf \n", cvs->inputs->r_wheel_speed);
+
+		buffer[0] = 0x05; //encoder left wheel
+	   	wiringPiSPIDataRW(channel, buffer, 5);
+	   	cvs->inputs->l_wheel_speed = compute_speed_wheel_motor(cvs->spi->frombytes(5, buffer));
+		printf("vitesse  L %lf \n", cvs->inputs->l_wheel_speed);
+
+		update_odometry(cvs);
+
+		cvs->rob_pos->x = cvs->rob_pos->x_odometer;
+		cvs->rob_pos->y = cvs->rob_pos->y_odometer;
+		cvs->rob_pos->theta = cvs->rob_pos->theta_odometer;
+
+		printf("ODOMETER: x = %1.3f ; y = %1.3f ; theta = %1.3f \n", cvs->rob_pos->x_odometer, cvs->rob_pos->y_odometer, cvs->rob_pos->theta_odometer * 180 / M_PI);
+
+
+		if (cvs->inputs->t >=0 && cvs->inputs->t <=5 )
+		{
+		   speedrefR=10.0;
+		   speedrefL=10.0;
+			 
+			printf("step1 \n");
+			speed_regulation(cvs,speedrefR,speedrefL);
+		}
+
+		else if (cvs->inputs->t >=5 && cvs->rob_pos->theta <0.95 *  M_PI && cvs->inputs->t <=15) // cvs->inputs->t <=11.2 )
+		{
+			speedrefR= 2.5;
+			speedrefL=-2.5;
+			printf("step2 \n");
+		   speed_regulation(cvs,speedrefR,speedrefL);
+		}
+		else if (cvs->inputs->t <=15)
+		{
+			speedrefR=10.0;
+			speedrefL=10.0;
+			printf("step3 \n");
+			speed_regulation(cvs,speedrefR,speedrefL);
+		}
+		else if (!finish)
+		{
+			speedrefR=-2.5;
+			speedrefL=2.5;
+			printf("step4 \n");
+			speed_regulation(cvs,speedrefR,speedrefL);
+			if (cvs->rob_pos->theta < 0) {
+				finish = 1;
+			}
+		}
+
+		else
+		{
+			speedrefR=0.0;
+			speedrefL=0.0;
+
+			printf("step5 \n");
+			speed_regulation(cvs,speedrefR,speedrefL);
+		}
+
+
+		cvs->can->push_PropDC(cvs->outputs->wheel_commands[R_ID], cvs->outputs->wheel_commands[L_ID]);
+
+	
+
+}
+   
+	fclose(fichier);
+    controller_finish(cvs);
+	free_CtrlStruct(cvs);
+	printf("Kraken freed\n");
+	return 0;
+}
+
