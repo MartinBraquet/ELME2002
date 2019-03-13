@@ -64,29 +64,34 @@ void get_LIDAR_data(CtrlStruct *cvs) {
 	if (error) die(error);
 
 	// Let's do 10 full 360 degree scans
-	for (int32_t num_scans = 0; num_scans < 1; ++num_scans) {
+	//for (int32_t num_scans = 0; num_scans < 1; ++num_scans) {
 		// This blocks until a full 360 degree scan is available
-		sweep_scan_s scan = sweep_device_get_scan(sweep, &error);
-		if (error) die(error);
+	sweep_scan_s scan = sweep_device_get_scan(sweep, &error);
+        if (error) die(error);
 
     // int* angle_table = malloc(sizeof(int));
 
     // For each sample in a full 360 degree scan print angle and distance.
     // In case you're doing expensive work here consider using a decoupled producer / consumer pattern.
-		for (int32_t n = 0; n < LIDAR_SAMPLES; ++n) {
-			inputs->lidar_signals[n] = (int) sweep_scan_get_signal_strength(scan, n);
-			if (inputs->lidar_signals[n] > 40) {
-			  inputs->lidar_angles[n] = (double) (sweep_scan_get_angle(scan, n) % 360000) * M_PI / 180000.0;
-			  inputs->lidar_distances[n] = (double) sweep_scan_get_distance(scan, n) / 100.0;
-			}
-			//printf("LIDAR: Angle %f [rad], Distance %f [m], Signal Strength: %d\n", inputs->lidar_angles[n], inputs->lidar_distances[n], inputs->lidar_signals[n]);
-			//printf("%f, %f, %d\n", inputs->lidar_angles[n], inputs->lidar_distances[n], inputs->lidar_signals[n]);
+	for (int32_t n = 0; n < LIDAR_SAMPLES; ++n) {
+		inputs->lidar_signals[n] = (int) sweep_scan_get_signal_strength(scan, n);
+		if (inputs->lidar_signals[n] > 40) {
+		  inputs->lidar_angles[n]    = (double) (sweep_scan_get_angle(scan, n) % 360000) * M_PI / 180000.0;
+		  inputs->lidar_distances[n] = (double) sweep_scan_get_distance(scan, n) / 100.0;
+		  //printf("%f, %f, %d\n", inputs->lidar_angles[n], inputs->lidar_distances[n], inputs->lidar_signals[n]);
+		  //printf("LIDAR: Angle %f [rad], Distance %f [m], Signal Strength: %d\n", inputs->lidar_angles[n], inputs->lidar_distances[n], inputs->lidar_signals[n]);
+		} else {
+		  inputs->lidar_angles[n]    = 0.0;
+		  inputs->lidar_distances[n] = 0.0;
 		}
+		//printf("LIDAR: Angle %f [rad], Distance %f [m], Signal Strength: %d\n", inputs->lidar_angles[n], inputs->lidar_distances[n], inputs->lidar_signals[n]);
+		//printf("%f, %f, %d\n", inputs->lidar_angles[n], inputs->lidar_distances[n], inputs->lidar_signals[n]);
+	}
 
-		// Cleanup scan response
-		sweep_scan_destruct(scan);
+	// Cleanup scan response
+	sweep_scan_destruct(scan);
 
-    }
+    //}
 }
 
 void free_LIDAR(CtrlStruct *cvs) {

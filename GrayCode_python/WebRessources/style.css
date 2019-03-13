@@ -1,0 +1,271 @@
+body {
+	font-family: Verdana, Arial, sans-serif;
+    background-color: #5b5b5b;
+    background-image:url(images/gray_code.jpg);
+    background-repeat: no-repeat;
+    background-position: top center;
+    margin-left: auto;
+    margin-right: a
+	margin: 0px auto;
+	padding: 60px 0 20px 0;
+
+}
+centered{
+    margin: 0;
+    color: #000000;
+    background-color: #808080;
+    background-repeat: no-repeat;
+    background-position: top center;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin-right: -50%;
+    transform: translate(-50%, -50%)
+}
+#shadow-one {
+	width: 760px;
+	border: 1px solid #555;
+	margin: 0px auto;
+}
+#shadow-two {
+	border: 1px solid #4b4b4b;
+}
+#shadow-three {
+	border: 1px solid #444;
+}
+#shadow-four {
+	border: 1px solid #3a3a3a;
+}
+#cadre {
+    width: 140px;
+    margin-left: auto;
+    margin-right: auto;
+    background: #000000;
+    color: #E0FFFF;
+    }
+#page {
+
+	border: 1px solid #333;
+	background: #6495ED;
+	padding: 20px;
+	font-size: 10pt;
+}
+
+#page td {
+	font-size: 10pt;
+}
+
+#title {
+	background: #00008B;
+	padding: 4px;
+	font-weight: bold;
+	color: #F4A460;
+	margin-bottom: 15px;
+	height: 60px;
+        -moz-border-radius:20px 0;
+        -webkit-border-radius:20px 0;
+        border-radius:20px 0;
+}
+
+#title .right {
+	float: right;
+	width: 700px;
+	text-align: center;
+}
+
+#menu {
+	float: left;
+	width: 150px;
+	padding-right: 20px;
+}
+
+#menu a {
+	width: 140px;
+	display: block;
+	background: #00008B;
+	color: #6495ED;
+	padding: 8px;
+	font-weight: bold;
+	border-bottom: 20px solid #6495ED;
+	text-decoration: none;
+        -moz-border-radius:20px 0;
+        -webkit-border-radius:20px 0;
+        border-radius:20px 0;
+}
+
+#menu a:hover {
+	background: #4B0082;
+}
+
+#content {
+	width: 525px;
+	float: right;
+	padding-right: 10px;
+        color: #483D8B;
+}
+
+#content a {
+	color: #483D8B;
+	text-decoration: none;
+}
+
+#content a:hover {
+	color: #d33;
+	text-decoration: underline;
+}
+
+#content h3 {
+	margin-top: 5px;
+        color: #8B008B;
+}
+#entry {
+	background: #E6E6FA;
+        color: #00;
+        text-align: center;
+        -moz-border-radius:20px 0;
+        -webkit-border-radius:20px 0;
+        border-radius:20px 0;
+}
+#colorful{
+    	color: #F4A460;
+    }
+.spacer {
+	clear: both;
+}
+
+#footer {
+	font-size: 0.8em;
+	color: #F4A460;
+	text-align: center;
+	margin: 10px 50px 0 50px;
+	padding-top: 10px;
+	border-top: 1px dotted #666;
+}
+
+#status {
+	width: 175px;
+	float: right;
+	padding: 10px;
+	margin: 10px;
+	border: 1px dotted #666;
+	font-weight: bold;
+}
+
+#status p {
+	padding: 5px 0 5px 10px;
+	text-indent: -10px;
+	margin: 0;
+}
+
+#status .leds {
+	font-size: 14pt;
+}
+
+#status .leds a {
+	color: #ddd;
+	cursor: pointer;
+}
+
+#status .leds a:hover {
+	color: #ddd;
+	text-decoration: none;
+}
+
+.examplebox {
+	margin:10px 40px 10px 40px;
+	padding: 8px;
+	border: 1px dotted #333;
+	text-align:center;
+	background:#ddd;
+}
+
+.code {
+	font-family: Courier New, Courier, fixed-width, fixed;
+}
+
+.exercise {
+	background: #fe9;
+	padding: 5px;
+	margin-left: 10px;
+	border-left: 2px solid #eb3;
+}
+
+.error {
+	margin-left: 10px;
+	padding: 10px;
+	background: #fdd;
+	border-left: 2px solid #900;
+}
+
+#content h6 {
+	border-top: 1px dashed #333;
+	margin: 15px;
+	padding: 0px;
+	height: 1px;
+}
+
+.examplebox td {
+	text-align:left;
+	padding-right: 15px;
+}
+
+fieldset {
+	margin:10px 40px 10px 40px;
+	padding: 8px;
+	border: 2px solid #F4A460;
+        background: #E0FFFF;
+        -moz-border-radius:8px;
+	-webkit-border-radius:8px;	
+	border-radius:8px;	
+}
+
+fieldset div {
+	padding: 2px 0px 2px 150px;
+}
+
+fieldset div label {
+	margin-left: -140px;
+	padding-top: 2px;
+	width: 135px;
+	font-weight: bold;
+	position: absolute;
+}
+
+fieldset input {
+	width: 250px;
+        background:#E6E6FA;
+        text-align: center;
+}
+
+fieldset input.sm {
+	width: auto;
+}
+
+fieldset textarea {
+	width: 250px;
+}
+
+.result
+{
+	margin: 10px 40px 10px 40px;
+	padding: 8px;
+	border: 1px solid #333;
+	text-align: center;
+	font-weight: bold;
+	background: #eee;
+}
+
+	.ok {
+		border-color: #6b6;
+		background: #efe;
+	}
+	
+	.fail {
+		border-color: #b66;
+		background: #fee;
+	}
+	
+	.unk {
+		border-color: #cc6;
+		background: #ffd;
+	}
