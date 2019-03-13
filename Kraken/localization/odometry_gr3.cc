@@ -1,5 +1,6 @@
 #include "odometry_gr3.h"
 #include "init_pos_gr3.h"
+#include "../useful/limit_angle_gr3.h"
 #include <math.h>
 
 /*! \brief update the robot odometry
@@ -18,7 +19,7 @@ void update_odometry(CtrlStruct *cvs)
 	rob_pos = cvs->rob_pos;
 	robot_dims = cvs->robot_dimensions;
 
-	// printf("odo_l_wheel_last_angle: %1.3f ; inputs->odo_l_wheel_angle: %1.3f\n", rob_pos->odo_l_wheel_last_angle, inputs->odo_l_wheel_angle);
+	//printf("odo_l_wheel_last_angle: %1.3f ; inputs->odo_r_wheel_angle: %1.3f\n", rob_pos->odo_l_wheel_last_angle, inputs->odo_r_wheel_angle);
 
 	double delta_s_l = inputs->odo_l_wheel_angle - rob_pos->odo_l_wheel_last_angle;
 	double delta_s_r = inputs->odo_r_wheel_angle - rob_pos->odo_r_wheel_last_angle;
@@ -31,6 +32,7 @@ void update_odometry(CtrlStruct *cvs)
 	rob_pos->x_odometer = rob_pos->x_odometer + delta_s * cos(rob_pos->theta + delta_theta / 2.0);
 	rob_pos->y_odometer = rob_pos->y_odometer + delta_s * sin(rob_pos->theta + delta_theta / 2.0);
 	rob_pos->theta_odometer = rob_pos->theta_odometer + delta_theta;
+	limit_angle(&rob_pos->theta_odometer);
 
 	// last update time
 	rob_pos->last_t = inputs->t;

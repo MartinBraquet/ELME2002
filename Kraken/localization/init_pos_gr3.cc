@@ -15,16 +15,16 @@ void set_init_position(int robot_team, RobotPosition *rob_pos)
 {
 	switch (robot_team)
 	{
-		case TEAM_YELLOW: // blue robot
+		case TEAM_YELLOW:
 			rob_pos->x = 0.0;
-			rob_pos->y = 0.0;
-			rob_pos->theta = 0.0;
+			rob_pos->y = -1.37;
+			rob_pos->theta = M_PI / 2;
 			break;
 
-		case TEAM_PURPLE: // red robot
+		case TEAM_PURPLE:
 			rob_pos->x = 0.0;
-			rob_pos->y = 0.0;
-			rob_pos->theta = 0.0;
+			rob_pos->y = 1.37;
+			rob_pos->theta = -M_PI / 2;
 			break;
 	
 		default:
@@ -32,9 +32,9 @@ void set_init_position(int robot_team, RobotPosition *rob_pos)
 			exit(EXIT_FAILURE);
 	}	
 
-	rob_pos->x_odometer = 0.0;
-	rob_pos->y_odometer = 0.0;
-	rob_pos->theta_odometer  = 0.0;
+	rob_pos->x_odometer = rob_pos->x;
+	rob_pos->y_odometer = rob_pos->y;
+	rob_pos->theta_odometer  = rob_pos->theta;
 
 	rob_pos->odo_l_wheel_last_angle = 0.0;
 	rob_pos->odo_r_wheel_last_angle = 0.0;

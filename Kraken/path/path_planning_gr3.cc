@@ -25,8 +25,8 @@ void init_path_planning(CtrlStruct *cvs)
     path->next = 0;
     path->speed_coeff = 2.0;
     
-    double beacons[2][3] = {{0.0, 1.062, -1.062},
-                            {-1.562, 1.562, 1.562}};
+    double beacons[2][3] = {{-1.05, 1.05, -1.05},
+                            {-1.55, -1.55, 0.0}};
 	for (j=0; j<3; j++) {
 	    for (i=0; i<2; i++) {	
 		    path->beacons[i][j] = beacons[i][j];

@@ -82,22 +82,20 @@ void init_speed_controller(CtrlStruct *cvs){
 	cvs->motor_str->In = 0.82;
 	cvs->motor_str->Nn = 4770.0;
 	cvs->motor_str->Ra = 5.84;
-	cvs->motor_str->R = 0.03;
-	//cvs->motor_str->kphi = 0.0261;
-	cvs->motor_str->kphi = 0.03878;
+	cvs->motor_str->kphi = 0.03783;
 	cvs->motor_str->red = 19.0;
 
     cvs->motor_str->l_motor = (Motor*) malloc(sizeof(struct Motor));
     cvs->motor_str->r_motor = (Motor*) malloc(sizeof(struct Motor));
 	
-	cvs->motor_str->l_motor->Ki = 0.1190; // 0.1194;
-	cvs->motor_str->l_motor->Kp = 0.0397;
+	cvs->motor_str->l_motor->Ki = 0.3367;
+	cvs->motor_str->l_motor->Kp = 0.0415;
 	cvs->motor_str->l_motor->K = 1.0;
 	cvs->motor_str->l_motor->komega = 0.9998;
 	cvs->motor_str->l_motor->integral_error = 0.0;
 
-	cvs->motor_str->r_motor->Ki = 0.1190; // 0.1194;
-	cvs->motor_str->r_motor->Kp = 0.0397;
+	cvs->motor_str->r_motor->Ki = cvs->motor_str->l_motor->Ki;
+	cvs->motor_str->r_motor->Kp = cvs->motor_str->l_motor->Kp;
 	cvs->motor_str->r_motor->K = 1.0;
 	cvs->motor_str->r_motor->komega = 0.9998;
 	cvs->motor_str->r_motor->integral_error = 0.0;

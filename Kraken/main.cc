@@ -7,6 +7,7 @@
 #include "ctrl_main_gr3.h"
 #include "regulation/speed_controller_gr3.h"
 #include "regulation/speed_regulation_gr3.h"
+#include "localization/triangulation_gr3.h"
 #include "localization/lidar.h"
 #include "useful/mytime.h"
 #include "useful/getch_keyboard.h"
@@ -25,9 +26,10 @@ void *LIDAR_task(void *ptr) {
 	init_LIDAR(cvs);
 	int i;
 
-	while(inputs->t < 100.0) {
-		printf("LIDAR loop: %d\n", i);
+	while(!cvs->stop_lidar) {
+		//printf("LIDAR loop: %d\n", i);
 		get_LIDAR_data(cvs);
+		triangulation(cvs);
 		i++;
 	}
 
@@ -54,38 +56,44 @@ void *keyboard_task(void *ptr) {
 
 	while((ch = getch()) != 'q') {
 		switch(ch) { // the real value
-		    case '8':
-		        // code for arrow up
+			case '8':
+				// code for arrow up
 				printf("Arrow up\n");
-				speed_regulation(cvs, 5, 5);
-		        break;
-		    case '2':
-		        // code for arrow down
+				cvs->outputs->wheel_commands[R_ID] = 55.0;
+				cvs->outputs->wheel_commands[L_ID] = 55.0;
+				break;
+			case '2':
+				// code for arrow down
 				printf("Arrow down\n");
-				speed_regulation(cvs, -5, -5);
-		        break;
-		    case '6':
-		        // code for arrow right
+				cvs->outputs->wheel_commands[R_ID] = -35.0;
+				cvs->outputs->wheel_commands[L_ID] = -35.0;
+				break;
+			case '6':
+				// code for arrow right
 				printf("Arrow right\n");
-				speed_regulation(cvs, -4, 4);
-		        break;
-		    case '4':
-		        // code for arrow left
+				cvs->outputs->wheel_commands[R_ID] = 0.0;
+				cvs->outputs->wheel_commands[L_ID] = 50.0;
+				break;
+			case '4':
+				// code for arrow left
 				printf("Arrow left\n");
-				speed_regulation(cvs, 4, -4);
-		        break;
+				cvs->outputs->wheel_commands[R_ID] = 50.0;
+				cvs->outputs->wheel_commands[L_ID] = 0.0;
+				break;
 			case '5':
-		        // code for rest
+				// code for rest
 				printf("Stop robot\n");
-				speed_regulation(cvs, 0, 0);
-		        break;
+				cvs->outputs->wheel_commands[R_ID] = 0.0;
+				cvs->outputs->wheel_commands[L_ID] = 0.0;
+				break;
 		}
-
 		cvs->can->push_PropDC(cvs->outputs->wheel_commands[R_ID], cvs->outputs->wheel_commands[L_ID]);
-
 	}
 
 	printf("END: keyboard\n");
+	
+	cvs->stop_lidar = 1;
+	
 	return 0;
 
 }
@@ -113,19 +121,18 @@ void *main_task(void *ptr) {
 		t = get_time() - start_time;
 		inputs->t = t;
 
-		printf("Time: %f\n", t);
+		//printf("Time: %f\n", t);
 
 		//Data from motor encoders
-		//Speed
-		buffer[0] = 0x00; // motor encoder left wheel angle
+		buffer[0] = 0x00; // motor encoder right wheel angle
 	   	wiringPiSPIDataRW(channel, buffer, 5);
-		inputs->motor_enc_l_wheel_angle = compute_angle_wheel_motor(spi->frombytes(5, buffer));
+		inputs->motor_enc_r_wheel_angle = compute_angle_wheel_motor(spi->frombytes(5, buffer));
  		//printf("angle r %lf \n",compute_angle_wheel_motor(spi->frombytes(5, buffer)));
 
-		buffer[0] = 0x01; // motor encoder right wheel angle
+		buffer[0] = 0x01; // motor encoder left wheel angle
 	   	wiringPiSPIDataRW(channel, buffer, 5);
-		cvs->inputs->motor_enc_r_wheel_angle = compute_angle_wheel_motor(spi->frombytes(5, buffer));
-		//printf("angle l %lf \n",compute_angle_wheel_motor(spi->frombytes(5, buffer)));
+		cvs->inputs->motor_enc_l_wheel_angle = compute_angle_wheel_motor(spi->frombytes(5, buffer));
+		//printf("angle l %lf \n",coqqmpute_angle_wheel_motor(spi->frombytes(5, buffer)));
 		
 		buffer[0] = 0x02; // motor encoder left wheel speed
         wiringPiSPIDataRW(channel, buffer, 5);
@@ -139,12 +146,12 @@ void *main_task(void *ptr) {
 		buffer[0] = 0x05; // motor encoder left wheel speed
 	   	wiringPiSPIDataRW(channel, buffer, 5);
 	   	inputs->motor_enc_l_wheel_speed = compute_speed_wheel_motor(spi->frombytes(5, buffer));
-		printf("speed  L %lf \n", inputs->motor_enc_l_wheel_speed);
+		//printf("speed  L %lf \n", inputs->motor_enc_l_wheel_speed);
 
 		buffer[0] = 0x04; // motor encoder right wheel speed
 	   	wiringPiSPIDataRW(channel, buffer, 5);
 		inputs->motor_enc_r_wheel_speed = compute_speed_wheel_motor(spi->frombytes(5, buffer));
-		printf("speed  R %lf \n", inputs->motor_enc_r_wheel_speed);
+		//printf("speed  R %lf \n", inputs->motor_enc_r_wheel_speed);
 
 		inputs->odo_l_wheel_speed = inputs->motor_enc_l_wheel_speed;
 		inputs->odo_r_wheel_speed = inputs->motor_enc_r_wheel_speed;
@@ -212,7 +219,7 @@ int main()
 
     controller_finish(cvs);
 	free_CtrlStruct(cvs);
-	printf("Kraken freed");
+	printf("Kraken freed\n");
 	return 0;
 
 }

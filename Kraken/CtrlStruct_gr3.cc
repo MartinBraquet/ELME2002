@@ -29,6 +29,7 @@ CtrlStruct* init_CtrlStruct(CtrlIn *inputs, CtrlOut *outputs)
 	cvs->outputs = outputs;
 
 	cvs->keyboard = 0;
+	cvs->stop_lidar = 0;
 
 	// states
 	cvs->main_state = 0;
@@ -81,7 +82,7 @@ CtrlStruct* init_CtrlStruct(CtrlIn *inputs, CtrlOut *outputs)
     cvs->robot_dimensions->radius = 0.13; // [m]
     cvs->robot_dimensions->wheel_radius = 0.025; // [m]
     cvs->robot_dimensions->wheel_axle = 0.232; // [m]
-    cvs->robot_dimensions->tower_distance = 0.083; // [m]
+    cvs->robot_dimensions->lidar_distance = 0.0; // [m]
     cvs->robot_dimensions->beacon_radius = 0.04; // [m]
     cvs->robot_dimensions->microswitch_distance = 0.09; // [m]
       

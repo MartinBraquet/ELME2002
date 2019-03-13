@@ -93,9 +93,11 @@ void controller_loop(CtrlStruct *cvs)
 	cvs->outputs->tower_command = cvs->py_outputs->tower_command;
 	*/
 	
-	// printf("l_wheel_speed:%f [rad/s] ; r_wheel_speed:%f [rad/s]\n", cvs->inputs->odo_l_wheel_speed, cvs->inputs->odo_r_wheel_speed);
+	printf("l_wheel_speed:%f [rad/s] ; r_wheel_speed:%f [rad/s]\n", cvs->inputs->odo_l_wheel_speed, cvs->inputs->odo_r_wheel_speed);
 	
-	//printf("ODOMETER: x = %1.3f ; y = %1.3f ; theta = %1.3f \n", cvs->rob_pos->x, cvs->rob_pos->y, cvs->rob_pos->theta_odometer * 180 / M_PI);
+	// printf("ODOMETER: x = %1.3f ; y = %1.3f ; theta = %1.3f \n", cvs->rob_pos->x, cvs->rob_pos->y, cvs->rob_pos->theta_odometer * 180 / M_PI);
+		
+	//printf("GUESSED: x = %1.3f ; y = %1.3f ; theta = %1.3f \n", cvs->rob_pos->x, cvs->rob_pos->y, cvs->rob_pos->theta * 180 / M_PI);
 	
 	// variables declaration
 	double t;
