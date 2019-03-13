@@ -32,10 +32,8 @@ typedef struct MotorStruct{
     double Nn; ///< tr/min
 
     double Ra; ///< omh
-
-	double R;  ///< radius of the wheel
-	double kphi;  ///< kphi of the motor
-	double red; ///< reduction ratio
+    double kphi;  ///< kphi of the motor
+    double red; ///< reduction ratio
     
 } MotorStruct;
 

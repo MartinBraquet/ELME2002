@@ -7,7 +7,7 @@
 #include <math.h>
 #include <stdio.h>
 
-#define PRINT_TRIANGULATION 0
+#define PRINT_TRIANGULATION 1
 
 
 int cmp(const void *x, const void *y)
@@ -50,33 +50,46 @@ void triangulation(CtrlStruct *cvs)
     */
     double theta_beacon[3];
     for (i=0; i<3; i++) {
-        theta_beacon[i] = cvs->rob_pos->theta;
+        theta_beacon[i] = rob_pos->theta;
     }
     
-    /*
-    int last_edge[3] = {2, 0, 1};
-    double angle_rising, angle_falling; 
+    double pos_lidar[2];
+    int n[3] = {0,0,0};
+    double a[3] = {0.0,0.0,0.0};
+    
+    for (i = 0; i < LIDAR_SAMPLES; i++) {
+        pos_lidar[0] = rob_pos->x + inputs->lidar_distances[i] * cos(theta_beacon[0] + inputs->lidar_angles[i]);
+        pos_lidar[1] = rob_pos->y + inputs->lidar_distances[i] * sin(theta_beacon[0] + inputs->lidar_angles[i]);
+        //printf("%1.3f, %1.3f\n", pos_lidar[0], pos_lidar[1]);
+        // Beacon 0 position
+        if (pos_lidar[0] < -0.8 && pos_lidar[0] > -1.2 && pos_lidar[1] < -1.3 && pos_lidar[1] > -1.7) {
+            printf("LIDAR: Beacon 0 (%1.3f, %1.3f)\n", pos_lidar[0], pos_lidar[1]);
+            n[0]++;
+            a[0] += inputs->lidar_angles[i];
+        }
+        
+        // Beacon 1 position
+        if (pos_lidar[0] < 1.2 && pos_lidar[0] > 0.8 && pos_lidar[1] < -1.3 && pos_lidar[1] > -1.7) {
+            printf("LIDAR: Beacon 1 (%1.3f, %1.3f)\n", pos_lidar[0], pos_lidar[1]);
+            n[1]++;
+            a[1] += inputs->lidar_angles[i];
+        }
+        
+        // Mast position
+        if (pos_lidar[0] < -0.8 && pos_lidar[0] > -1.2 && pos_lidar[1] < 0.2 && pos_lidar[1] > -0.2) {
+            printf("LIDAR: Mast (%1.3f, %1.3f)\n", pos_lidar[0], pos_lidar[1]);
+            n[2]++;
+            a[2] += inputs->lidar_angles[i];
+        }
+        
+    }
     
     for (i=0; i<3; i++) {
-        if (inputs->falling_index_fixed == inputs->rising_index_fixed) {
-            angle_rising = inputs->last_rising_fixed[(inputs->rising_index_fixed - i + NB_STORE_EDGE) % NB_STORE_EDGE];
-            angle_falling = inputs->last_falling_fixed[(inputs->falling_index_fixed - i + NB_STORE_EDGE) % NB_STORE_EDGE];
-        } else {
-            theta_beacon[i] += (inputs->last_rising_fixed[(inputs->rising_index_fixed - i + NB_STORE_EDGE) % NB_STORE_EDGE] 
-                          + inputs->last_falling_fixed[(inputs->falling_index_fixed - last_edge[i] + NB_STORE_EDGE) % NB_STORE_EDGE]) / 2.0;
-        }
-        if (angle_rising - angle_falling > M_PI) {
-            angle_falling += 2 * M_PI;
-        }
-        theta_beacon[i] += (angle_rising + angle_falling) / 2.0;
+        theta_beacon[i] += a[i]/n[i];
         limit_angle(&theta_beacon[i]);
-        
-        /*
-        if (abs(angle_rising - angle_falling) > 1.0) {
-            printf("Error angle: %1.3f   %1.3f   theta = %1.3f\n", angle_rising * 180 / M_PI, angle_falling * 180 / M_PI, theta_beacon[i] * 180 / M_PI);
-        }
-        */
-    //}
+    }
+    
+    
     
     qsort(theta_beacon, sizeof(theta_beacon)/sizeof(theta_beacon[0]), sizeof(theta_beacon[0]), cmp);
     
@@ -107,14 +120,16 @@ void triangulation(CtrlStruct *cvs)
     // printf("TRIANGULATION: D = %f", D);
     
     if (abs(D) > 1e-6) {
-        rob_pos->x_beacons = path->beacons[0][1] + k31_p * (y12_p - y23_p) / D;
-        rob_pos->y_beacons = path->beacons[1][1] + k31_p * (x23_p - x12_p) / D;
-        rob_pos->theta_beacons = atan2(path->beacons[1][0] - rob_pos->y_beacons, path->beacons[0][0] - rob_pos->x_beacons) - (theta_beacon[0] - cvs->rob_pos->theta);
-        rob_pos->x_beacons -= cvs->robot_dimensions->tower_distance * cos(rob_pos->theta_beacons);
-        rob_pos->y_beacons -= cvs->robot_dimensions->tower_distance * sin(rob_pos->theta_beacons);
+        rob_pos->x_lidar = path->beacons[0][1] + k31_p * (y12_p - y23_p) / D;
+        rob_pos->y_lidar = path->beacons[1][1] + k31_p * (x23_p - x12_p) / D;
+        rob_pos->theta_lidar = atan2(path->beacons[1][0] - rob_pos->y_lidar, path->beacons[0][0] - rob_pos->x_lidar) - (theta_beacon[0] - cvs->rob_pos->theta);
+        rob_pos->x_lidar -= cvs->robot_dimensions->lidar_distance * cos(rob_pos->theta_lidar);
+        rob_pos->y_lidar -= cvs->robot_dimensions->lidar_distance * sin(rob_pos->theta_lidar);
     } else {
         printf("TRIANGULATION: D = 0 !\n");
     }
+    
+    printf("LIDAR: x = %1.3f ; y = %1.3f ; theta = %1.3f \n", cvs->rob_pos->x_lidar, cvs->rob_pos->y_lidar, cvs->rob_pos->theta_lidar * 180 / M_PI);
 	
 	return;
 }

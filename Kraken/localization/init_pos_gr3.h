@@ -19,9 +19,9 @@ typedef struct RobotPosition
 	double y_odometer; ///< odometer y position [m]
 	double theta_odometer; ///< odometer robot orientation [rad]
 	
-	double x_beacons; ///< x position based on triangulation [m]
-	double y_beacons; ///< y position based on triangulation [m]
-	double theta_beacons; ///< robot orientation based on triangulation [rad]
+	double x_lidar; ///< x position based on triangulation [m]
+	double y_lidar; ///< y position based on triangulation [m]
+	double theta_lidar; ///< robot orientation based on triangulation [rad]
 
 	double last_t; ///< last time odometry was updated
 

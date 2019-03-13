@@ -51,7 +51,7 @@ typedef struct Robot_dimensions
 	double radius;   ///< radius of the robot
 	double wheel_radius;   ///< wheel radius of the robot
 	double wheel_axle;   ///< distance between the wheels
-	double tower_distance;   ///< distance between the beacon and the center
+	double lidar_distance;   ///< distance between the lidar and the center of the robot
 	double beacon_radius;   ///< radius of the beacon
 	double microswitch_distance;   ///< distance between one micro-switch and the center
 } Robot_dimensions;
@@ -76,6 +76,7 @@ typedef struct CtrlStruct
 	int plus_or_minus;    ///< ID of the team
 
 	int keyboard;    ///< Keyboard mode
+	int stop_lidar;    ///< Keyboard mode
 
 	CAN *can;
 	SPI *spi;

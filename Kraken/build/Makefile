@@ -16,7 +16,6 @@ OBJS    = $(patsubst $(SRCDIR)/%.cc,$(OBJDIR)/%.o,$(SRCS))
 
 # Targets
 main: $(OBJS)
-	echo $(SRCS)
 	$(CC) $(OBJS) $(LIBS) -o $@
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cc
