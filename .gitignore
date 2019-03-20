@@ -15,4 +15,7 @@
 *.qsf
 *.gch
 *.o
+*.jic
+*.sof
+*.map
 Kraken/build/main
