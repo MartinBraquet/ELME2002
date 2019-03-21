@@ -192,6 +192,12 @@ assign GPIO_1[18] = piston1;
 assign GPIO_1[16] = piston2;
 assign GPIO_1[14] = piston3;
 
+assign valve1 = 1'b1;
+assign valve2 = 1'b1;
+assign piston1 = 1'b1;
+assign piston2 = 1'b1;
+assign piston3 = 1'b1;
+
 /*pneumatic (CLOCK_50,
 					reset,
 					 signalrasp
@@ -205,19 +211,32 @@ assign GPIO_1[14] = piston3;
 //=======================================================
 //Ultrasonic sensor
 //=======================================================
-logic TRIG1,TRIG2,TRIG3,TRIG4;
-logic ECHO1,ECHO2,ECHO3,ECHO4;
+logic trig1,trig2,trig3,trig4;
+logic echo1,echo2,echo3,echo4;
+logic [31:0] count_max_ultrasonic_sensor,deltaT_ultrasonic1,deltaT_ultrasonic2,deltaT_ultrasonic3,deltaT_ultrasonic4;
+logic resetUltrasonic;
+logic resetUltrasonicSPI;
+
+assign count_max_ultrasonic_sensor = 32'd10000000;
+
+assign echo1 = GPIO_1[17];
+assign echo2 = GPIO_1[13];	
+assign echo3 = GPIO_1[7];  
+assign echo4 = GPIO_1[3];
+
+assign GPIO_1[15] = trig1;
+assign GPIO_1[11] = trig2;	
+assign GPIO_1[5] = trig3;
+assign GPIO_1[1] = trig4;
 
 
-assign ECHO1 = GPIO_1[17];
-assign ECHO2 = GPIO_1[13];	
-assign ECHO3 = GPIO_1[7];  
-assign ECHO4 = GPIO_1[3];
 
-assign GPIO_1[15] = TRIG1;
-assign GPIO_1[11] = TRIG2;	
-assign GPIO_1[5] = TRIG3;
-assign GPIO_1[1] = TRIG4;
+ultrasonic_sensor ultraSonic1(CLOCK_50,resetUltrasonic,count_max_ultrasonic_sensor,echo1,trig1,deltaT_ultrasonic1);
+ultrasonic_sensor ultraSonic2(CLOCK_50,resetUltrasonic,count_max_ultrasonic_sensor,echo2,trig2,deltaT_ultrasonic2);
+ultrasonic_sensor ultraSonic3(CLOCK_50,resetUltrasonic,count_max_ultrasonic_sensor,echo3,trig3,deltaT_ultrasonic3);
+ultrasonic_sensor ultraSonic4(CLOCK_50,resetUltrasonic,count_max_ultrasonic_sensor,echo4,trig4,deltaT_ultrasonic4);
+
+
 
 //=======================================================
 //  Encoder declaration
@@ -293,15 +312,16 @@ counter SpiCounter(clk, reset, registerCount);
 // This code updates the data on the registers in misoRAM with counter
 always_comb
 	case (registerCount) 
-		
 		4'd0:  WriteDataM = enc_counter_LEFT_WHEEL_M; 	// motor left wheel position R1
 		4'd1:  WriteDataM = enc_counter_RIGHT_WHEEL_M;	// motor right wheel position R2
 		4'd2:  WriteDataM = enc_counter_LEFT_WHEEL_O;
 		4'd3:  WriteDataM = enc_counter_RIGHT_WHEEL_O;
 		4'd4:  WriteDataM = speed_LEFT_WHEEL;
 		4'd5:  WriteDataM = speed_RIGHT_WHEEL;
-		4'd6:  WriteDataM = 32'h00000000F;
-		//4'd7:  WriteDataM = 
+		4'd6:  WriteDataM = deltaT_ultrasonic1;
+		4'd7:  WriteDataM = deltaT_ultrasonic2;
+		4'd8:  WriteDataM = deltaT_ultrasonic3;
+		4'd9:  WriteDataM = deltaT_ultrasonic4;
 		// 4'd10:  WriteDataM = 
 		// 4'd11:  WriteDataM = 
 		// 4'd12:  WriteDataM = 
@@ -314,8 +334,9 @@ always_comb
 	// This code updates the data from the input register in mosiRAM with counter
 always_ff @(posedge clk)
 	case (registerCount)
-		4'd1:  reset_enc_LEFT_WHEEL_SPI = ReadDataM[0]; // reset signal for the LEFT wheel R1      
-		4'd2:  reset_enc_RIGHT_WHEEL_SPI = ReadDataM[0]; // reset signal for the RIGHT wheel R2
+		4'd0:  reset_enc_LEFT_WHEEL_SPI = ReadDataM[0]; // reset signal for the LEFT wheel R1      
+		4'd1:  reset_enc_RIGHT_WHEEL_SPI = ReadDataM[0]; // reset signal for the RIGHT wheel R2
+		4'd2:  resetUltrasonicSPI = ReadDataM[0]; // reset signal for the RIGHT wheel R2
 	endcase	
 
 
@@ -328,6 +349,7 @@ always_ff @ (posedge clk, posedge reset)
 			reset_enc_RIGHT_WHEEL = 1'b1;
 			reset_speed_LEFT_WHEEL = 1'b1;
 			reset_speed_RIGHT_WHEEL = 1'b1;
+			resetUltrasonic = 1'b1;
 			
 		end		
 	else
@@ -337,6 +359,7 @@ always_ff @ (posedge clk, posedge reset)
 			reset_enc_RIGHT_WHEEL = reset_enc_RIGHT_WHEEL_SPI;
 			reset_speed_LEFT_WHEEL = 1'b0;
 			reset_speed_RIGHT_WHEEL = 1'b0;
+			resetUltrasonic = resetUltrasonicSPI;
 		end
 	
 
