@@ -174,9 +174,18 @@ assign spi_clk  		= GPIO_0_PI[11];	// SCLK = pin 16 = GPIO_11
 assign spi_cs   		= GPIO_0_PI[9];	// CE0  = pin 14 = GPIO_9
 assign spi_mosi     	= GPIO_0_PI[15];	// MOSI = pin 20 = GPIO_15, send data from PI
 
+// DYNAMIXEL connectios
+assign GPIO_0_PI[26] = GPIO_1[4];
+assign GPIO_0_PI[28] = GPIO_1[6];
+assign GPIO_0_PI[21] = GPIO_1[2];
+
+assign LED[2] = GPIO_0_PI[26];
+assign LED[1] = GPIO_0_PI[28];
+assign LED[0] = GPIO_0_PI[21];
+
 assign GPIO_0_PI[13] = spi_cs ? 1'bz : spi_miso;  // MISO = pin 18 = GPIO_13, received data from PI
 assign GPIO_1[32] = 1'b 1;
-assign signalrasp = GPIO_0_PI[4];
+//assign signalrasp = GPIO_0_PI[4];
 	
 //=======================================================
 //  Encoder declaration
@@ -205,17 +214,17 @@ quadrature_decoder encoder_decoderLEFT_WHEEL_O(CLOCK_50, reset_enc_LEFT_WHEEL, G
 //
 //Pneumatic computation
 
-logic signalrasp,signal1,signal2,signal3 ;
+//logic signalrasp,signal1,signal2,signal3 ;
 
 
-pneumatic (CLOCK_50,
+/*pneumatic (CLOCK_50,
 					reset,
 					 signalrasp
 					 signal1,
 					 signal2,
 					 signal3
 					 signal4
-					);
+					);*/
 
 
 //=======================================================
@@ -308,7 +317,7 @@ always_ff @(posedge clk)
 always_ff @ (posedge clk, posedge reset) 
 	if (reset)
 		begin // Reset the counter and light on all the led to see that it is well reset
-			LED = 8'hff;
+//			LED = 8'hff;
 			reset_enc_LEFT_WHEEL = 1'b1;
 			reset_enc_RIGHT_WHEEL = 1'b1;
 			reset_speed_LEFT_WHEEL = 1'b1;
@@ -317,27 +326,27 @@ always_ff @ (posedge clk, posedge reset)
 		end		
 	else
 		begin 
-			LED = led_reg;
+//			LED = led_reg;
 			reset_enc_LEFT_WHEEL = reset_enc_LEFT_WHEEL_SPI;
 			reset_enc_RIGHT_WHEEL = reset_enc_RIGHT_WHEEL_SPI;
 			reset_speed_LEFT_WHEEL = 1'b0;
 			reset_speed_RIGHT_WHEEL = 1'b0;
 		end
 		
-/*always_ff@(posedge clk)
+always_ff@(posedge clk)
 begin
 	led_reg[7:0] = enc_counter_LEFT_WHEEL_O[7:0];
 	
 end
-endmodule*/
+endmodule
 
 
 
-always_ff@(posedge clk)
+/*always_ff@(posedge clk)
 begin
 	led_reg[7:0] = signal4;
 end
-endmodule
+endmodule*/
 
 
 // This counter is used to update each register (n = 16): thus it requires n clock cycles to update each reg

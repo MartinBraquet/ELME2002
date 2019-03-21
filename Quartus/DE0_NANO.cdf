@@ -4,7 +4,7 @@ JedecChain;
 	DefaultMfr(6E);
 
 	P ActionCode(Cfg)
-		Device PartName(EP4CE22) Path("C:/kraken/") File("output_file2.jic") MfrSpec(OpMask(1) SEC_Device(EPCS64) Child_OpMask(1 1));
+		Device PartName(EP4CE22F17) Path("C:/kraken/") File("DE0_NANO.sof") MfrSpec(OpMask(1));
 
 ChainEnd;
 

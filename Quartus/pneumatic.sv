@@ -1,4 +1,4 @@
-module pneumatic (input clk,
+/*module pneumatic (input clk,
 					input reset,
 					input signalrasp
 					output signal1,
@@ -23,4 +23,4 @@ module pneumatic (input clk,
 		signal3= 1'b1;	
 	end	
 
-endmodule
+endmodule*/
