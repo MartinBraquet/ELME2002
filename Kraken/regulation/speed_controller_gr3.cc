@@ -18,6 +18,16 @@ double compute_speed_wheel_motor(int speed){
 	return (speed * 2 * M_PI / 37750 / 65536.0 * 50e6);
 }
 
+// Angle of the odometers in rad
+double compute_angle_wheel_odo(int count){
+	return (count * 360 / 8192) * M_PI / 180;
+}
+
+// Rotation speed of the odometers in rad/s: compute each 65536 cycles and the CLK is at 50 MHz
+double compute_speed_wheel_odo(int speed){
+	return (speed * 2 * M_PI / 8192 / 65536.0 * 50e6);
+}
+
 int saturation(double *x, double xsat){
     if (*x > xsat) {
 	    *x = xsat;
@@ -36,9 +46,10 @@ double run_motor(CtrlStruct *cvs, Motor *theMotor, double omega_ref, double whee
     double motor_speed = wheel_speed / theMotor->komega * cvs->motor_str->red;
 
 	double delta_omega = omega_ref * cvs->motor_str->red - motor_speed;
-	//printf("omega_ref, wheel_speed, delta omega: %f %f %f \n", omega_ref, wheel_speed, delta_omega);
+	//printf("omega_ref, wheel_speed, delta omega: %f %f %f \n", omega_ref , wheel_speed, delta_omega);
 
 	double ua_p_ref = delta_omega * theMotor->Kp + theMotor->Ki * (dt * delta_omega + theMotor->integral_error);
+	//printf("%f %f\n", dt  , theMotor->integral_error);
 
 	// Current limitation
 	int current_sat = saturation(&ua_p_ref, cvs->motor_str->Ra * cvs->motor_str->In);
@@ -80,7 +91,6 @@ void init_speed_controller(CtrlStruct *cvs){
 
 	cvs->motor_str->Un = 24.0;
 	cvs->motor_str->In = 0.82;
-	cvs->motor_str->Nn = 4770.0;
 	cvs->motor_str->Ra = 5.84;
 	cvs->motor_str->kphi = 0.03783;
 	cvs->motor_str->red = 19.0;

@@ -15,7 +15,6 @@
 #include "localization/opp_pos_gr3.h"
 #include "regulation/speed_regulation_gr3.h"
 #include "regulation/speed_controller_gr3.h"
-#include "localization/calibration_gr3.h"
 #include "strategy/strategy_gr3.h"
 #include "path/path_planning_gr3.h"
 #include "simu_game_gr3.h"
@@ -57,6 +56,7 @@ void controller_init(CtrlStruct *cvs)
 	//Set the Can bus (Motor control)
 	cvs->can = new CAN(CAN_BR);
 	cvs->can->configure();
+	cvs->can->push_PropDC(10.0, 10.0);
 
 	//Set the SPI bus
 	int fd = wiringPiSPISetup(channel, clockSpi);
@@ -85,20 +85,19 @@ void controller_init(CtrlStruct *cvs)
  */
 void controller_loop(CtrlStruct *cvs)
 {
-    // printf("Control loop \n");
+    // printf("Control loop \n");c
     
-    /*
-	cvs->outputs->wheel_commands[0] = cvs->py_outputs->wheel_commands[0];
-	cvs->outputs->wheel_commands[1] = cvs->py_outputs->wheel_commands[1];
-	cvs->outputs->tower_command = cvs->py_outputs->tower_command;
-	*/
-	
-	printf("l_wheel_speed:%f [rad/s] ; r_wheel_speed:%f [rad/s]\n", cvs->inputs->odo_l_wheel_speed, cvs->inputs->odo_r_wheel_speed);
-	
-	// printf("ODOMETER: x = %1.3f ; y = %1.3f ; theta = %1.3f \n", cvs->rob_pos->x, cvs->rob_pos->y, cvs->rob_pos->theta_odometer * 180 / M_PI);
-		
-	//printf("GUESSED: x = %1.3f ; y = %1.3f ; theta = %1.3f \n", cvs->rob_pos->x, cvs->rob_pos->y, cvs->rob_pos->theta * 180 / M_PI);
-	
+	//printf("TRIANGULATION: x:%1.5f [m] ; y:%1.5f [m] ; theta:%1.5f [deg]\n", cvs->rob_pos->x_lidar, cvs->rob_pos->y_lidar, cvs->rob_pos->theta_lidar * 180 / M_PI);
+	//printf("GUESSED      : x:%1.5f [m] ; y:%1.5f [m] ; theta:%1.5f [deg]\n", cvs->rob_pos->x, cvs->rob_pos->y, cvs->rob_pos->theta * 180 / M_PI);
+
+	//printMatrix(cvs->rob_pos->pos_covariance, 3, 3);
+	//printMatrix(cvs->rob_pos->pos_covariance_triang, 3, 3);
+
+	//printf("OPPONENTS: x:%1.5f [m] ; y:%1.5f [m]\n", cvs->opp_pos->x[0], cvs->opp_pos->y[0]);
+	//printf("OPPONENTS: x:%1.5f [m] ; y:%1.5f [m]\n", cvs->opp_pos->x[1], cvs->opp_pos->y[1]);
+
+	//printf("l_wheel_speed:%f [rad/s] ; r_wheel_speed:%f [rad/s]\n", cvs->inputs->odo_l_wheel_speed, cvs->inputs->odo_r_wheel_speed);
+
 	// variables declaration
 	double t;
 	CtrlIn  *inputs;
@@ -112,16 +111,6 @@ void controller_loop(CtrlStruct *cvs)
 
 	// update the robot odometry
 	update_odometry(cvs);
-	
-	cvs->rob_pos->x = cvs->rob_pos->x_odometer;
-	cvs->rob_pos->y = cvs->rob_pos->y_odometer;
-	cvs->rob_pos->theta = cvs->rob_pos->theta_odometer;
-
-	// opponents position detection with the tower
-	opponents_tower(cvs);
-
-	// tower control
-	outputs->tower_command = 0.0;
 	
 	//printf("main_state: %d\n", cvs->main_state);
 
@@ -139,7 +128,7 @@ void controller_loop(CtrlStruct *cvs)
 		case RUN_STATE:
 			main_strategy(cvs);
 
-			if (t > 40.0)
+			if (t > 95.0)
 			{
 				cvs->main_state = STOP_END_STATE;
 			}

@@ -13,6 +13,8 @@
  */
 void set_init_position(int robot_team, RobotPosition *rob_pos)
 {
+	printf("Initial position\n");
+	
 	switch (robot_team)
 	{
 		case TEAM_YELLOW:
@@ -32,15 +34,17 @@ void set_init_position(int robot_team, RobotPosition *rob_pos)
 			exit(EXIT_FAILURE);
 	}	
 
-	rob_pos->x_odometer = rob_pos->x;
-	rob_pos->y_odometer = rob_pos->y;
-	rob_pos->theta_odometer  = rob_pos->theta;
-
 	rob_pos->odo_l_wheel_last_angle = 0.0;
 	rob_pos->odo_r_wheel_last_angle = 0.0;
 
 	rob_pos->last_t = 0.0;
 	
+	for (int i = 0; i < 3; i++) { 
+		for (int j = 0; j < 3; j++) {
+			rob_pos->pos_covariance[i][j] = 0;
+			rob_pos->pos_covariance_triang[i][j] = 0;
+		}
+	}
 }
 
 #if ROBOTICS_COURSE

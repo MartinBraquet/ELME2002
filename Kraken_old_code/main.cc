@@ -33,12 +33,12 @@ int main()
 		
 		//Data from motor encoders
 		//Speed		
-		buffer[0] = 0x04; // motor encoder right wheel	
+		buffer[0] = 0x02; // motor encoder right wheel	
 	   	wiringPiSPIDataRW(channel, buffer, 5);
 		kraken->motor_speed_right_wheel = compute_speed_wheel_motor(kraken->spi->frombytes(5, buffer)); 
 		printf("speed  R %lf \n", kraken->motor_speed_right_wheel);
 		
-		buffer[0] = 0x05; // motor encoder left wheel	
+		buffer[0] = 0x03; // motor encoder left wheel	
 	   	wiringPiSPIDataRW(channel, buffer, 5);
 	   	kraken->motor_speed_left_wheel = compute_speed_wheel_motor(kraken->spi->frombytes(5, buffer));
 		printf("speed  L %lf \n", kraken->motor_speed_left_wheel);
@@ -61,16 +61,24 @@ int main()
 		buffer[0] = 0x00; //encoder right wheel	
 	   	wiringPiSPIDataRW(channel, buffer, 5);
 		kraken->odometer_speed_right_wheel = compute_speed_wheel_motor(kraken->spi->frombytes(5, buffer)); 
-		//printf("speed  R %lf \n",kraken->speed_right_wheel);
+		printf("speed  R odom %lf \n",	kraken->odometer_speed_right_wheel );
 		
 		buffer[0] = 0x01; //encoder left wheel	
 	   	wiringPiSPIDataRW(channel, buffer, 5);
 	   	kraken->odometer_speed_left_wheel = compute_speed_wheel_motor(kraken->spi->frombytes(5, buffer));
-		//printf("speed  L %lf \n", kraken->speed_left_wheel);
+		printf("speed  L odom%lf  \n \n", 	kraken->odometer_speed_left_wheel );
+		
+		buffer[0] = 0x06; //ultrasonic
+	   	wiringPiSPIDataRW(channel, buffer, 5);
+		printf("ultrasonic %lf \n", 	kraken->spi->frombytes(5, buffer));
+		buffer[0] = 0x07; //ultrasonic
+	   	wiringPiSPIDataRW(channel, buffer, 5);
+		printf("ultrasonic count %lf \n \n", 	kraken->spi->frombytes(5, buffer));
+		
 		
 		//to compute where the robot is on the map
 		run_mapping(kraken->currentLocation, kraken->odometer_speed_left_wheel, kraken->odometer_speed_right_wheel);
-		print_mapping(kraken->currentLocation);
+		//print_mapping(kraken->currentLocation);
 		
 		//to compute where the robot needs to go
 		run_trajectoryTracker(kraken->tracker, omega_ref); 

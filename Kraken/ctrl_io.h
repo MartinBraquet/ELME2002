@@ -47,39 +47,6 @@ typedef struct CtrlIn
 	 */
 	int u_switch[NB_U_SWITCH]; ///< 1 if corresponding u_switch (R_ID or L_ID) is activated, 0 otherwise
 
-	/*! \brief tower
-	 * 
-	 * The tower saves the position of rising and falling edges detected with the laser as a position
-	 * relative to the robot. The position is given in radians in the ]-pi ; pi] interval, counter-clockwise.
-	 *  -pi/2 corresponds to an edge detected on the right of the robot
-	 *      0 corresponds to an edge detected just in front of the robot
-	 *   pi/2 corresponds to an edge detected on the left of the robot
-	 *     pi corresponds to an edge detected just behind the robot
-	 *
-	 * The tower must be able to detect more than one beacon, corresponding to more than one rising (and falling)
-	 * edge detected during a single rotation. To this end, the relative positions of the last 10 (= NB_STORE_EDGE)
-	 * rising and the last 10 falling edges are saved.
-	 *
-	 * This is stored in two rotating lists:
-	 *   the first edge is stored at index 0
-	 *   the second is stored at index 1
-	 *   ...
-	 *   the 10th is stored at index 9
-	 *   the 11th is stored at index 0 (erasing the first one)
-	 *   the 12th is stored at index 1 (erasing the second one)
-	 *   ...
-	 *
-	 * To this end, an integer indicates the index of the last edge added in the rotating list.
-	 *
-	 * Finally, the number of rising (and falling) edges detected during the last laser revolution are saved
-	 * in two additional integer values. To this end, a reference laser position must be defined to update this
-	 * value and to re-start the count of edges.
-	 */
-	double tower_pos; ///< tower current relative position [rad] in the range ]-pi/2 ; pi/2]
-
-	double last_rising[NB_STORE_EDGE];  ///< rotating list with the last rising edges detected [rad]
-	double last_falling[NB_STORE_EDGE]; ///< rotating list with the last falling edges detected [rad]
-
 
 	// LIDAR data
 	sweep_error_s error;
@@ -87,6 +54,13 @@ typedef struct CtrlIn
 	double lidar_angles[LIDAR_SAMPLES];
 	double lidar_distances[LIDAR_SAMPLES];
 	int lidar_signals[LIDAR_SAMPLES];
+	
+	double lidar_mean_angles[5];
+	double lidar_mean_distances[5];
+	
+	double relative_theta_opp;
+	int opp_detected;
+	double dist_opp;
 
 } CtrlIn;
 
@@ -105,14 +79,6 @@ typedef struct CtrlOut
 	 *    100 corresponds to +0.9*24 V
 	 */
 	double wheel_commands[2]; ///< wheel motors (R_ID or L_ID) commands [-], bounded in [-100 ; 100]
-
-	/*! \brief tower command
-	 *
-	 * The tower command is similar to the one of the wheels ('wheel_commands'), with the same duty cycle limit corresponding
-	 * to a range of [-0.9*24 V ; +0.9*24 V]. However, this motor is too powerful for this tower. Consequently, it is
-	 * better to limit 'tower_command' in a range of [-15 ; 15].
-	 */
-	double tower_command; ///< tower motor command [-], bounded in [-100 ; 100]
 
 } CtrlOut;
 

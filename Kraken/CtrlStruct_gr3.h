@@ -39,7 +39,6 @@ enum {TEAM_YELLOW, TEAM_PURPLE};
 // forward declaration
 typedef struct RobotPosition RobotPosition;
 typedef struct SpeedRegulation SpeedRegulation;
-typedef struct RobotCalibration RobotCalibration;
 typedef struct OpponentsPosition OpponentsPosition;
 typedef struct PathPlanning PathPlanning;
 typedef struct Strategy Strategy;
@@ -50,6 +49,7 @@ typedef struct Robot_dimensions
 {
 	double radius;   ///< radius of the robot
 	double wheel_radius;   ///< wheel radius of the robot
+	double odo_wheel_radius;   ///< wheel radius of the robot
 	double wheel_axle;   ///< distance between the wheels
 	double lidar_distance;   ///< distance between the lidar and the center of the robot
 	double beacon_radius;   ///< radius of the beacon
@@ -65,7 +65,6 @@ typedef struct CtrlStruct
 	RobotPosition *rob_pos; ///< robot position
 	OpponentsPosition *opp_pos; ///< opponents position
 	SpeedRegulation *sp_reg; ///< speed regulation
-	RobotCalibration *calib; ///< calibration
 	PathPlanning *path; ///< path-planning
 	Strategy *strat; ///< strategy
 	MotorStruct *motor_str; ///< motors structure
