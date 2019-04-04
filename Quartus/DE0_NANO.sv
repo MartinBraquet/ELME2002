@@ -198,7 +198,7 @@ logic resetPneumatic;
 assign GPIO_1[14] = 1'b0;//valve1 ;
 assign GPIO_1[20] = 1'b0;//valve2 ;
 assign GPIO_1[16] = 1'b0;//piston1;
-assign GPIO_1[28] = 1'b0;//piston2;
+assign GPIO_1[18] = 1'b0;//piston2;
 assign GPIO_1[22] = 1'b0;// piston3;
 
 //logic [31:0] counter1;
