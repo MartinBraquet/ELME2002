@@ -15,17 +15,16 @@ typedef struct RobotPosition
 	double y; ///< y position [m]
 	double theta; ///< robot orientation [rad]
 	
-	double x_odometer; ///< odometer x position [m]
-	double y_odometer; ///< odometer y position [m]
-	double theta_odometer; ///< odometer robot orientation [rad]
-	
 	double x_lidar; ///< x position based on triangulation [m]
 	double y_lidar; ///< y position based on triangulation [m]
 	double theta_lidar; ///< robot orientation based on triangulation [rad]
 
 	double last_t; ///< last time odometry was updated
-
-	double odo_l_wheel_last_angle; // last angle for odometry update
+	
+	double pos_covariance[3][3];	/// covariance of position with order x,y,theta
+	double pos_covariance_triang[3][3];	/// covariance of position due to triangulation with order x,y,theta
+	
+	double odo_l_wheel_last_angle; /// last angle for odometry update
 	double odo_r_wheel_last_angle;
 
 } RobotPosition;

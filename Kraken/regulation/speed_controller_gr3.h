@@ -43,6 +43,8 @@ void run_speed_controller(CtrlStruct *cvs, double l_sp_ref, double r_sp_ref);
 int saturation(double *x, double xsat);
 double compute_angle_wheel_motor(int count);
 double compute_speed_wheel_motor(int speed);
+double compute_angle_wheel_odo(int count);
+double compute_speed_wheel_odo(int speed);
 
 
 #endif //ifndef

@@ -1,4 +1,4 @@
-LIBS = -lwiringPi -lsweep -lpthread
+LIBS = -lwiringPi -lsweep -lpthread -lSDL2
 CC = g++
 OPTS = -Wall
 # Directories

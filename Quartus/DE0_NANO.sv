@@ -159,9 +159,19 @@ assign spi_clk  		= GPIO_0_PI[11];	// SCLK = pin 16 = GPIO_11
 assign spi_cs   		= GPIO_0_PI[9];	// CE0  = pin 14 = GPIO_9
 assign spi_mosi     	= GPIO_0_PI[15];	// MOSI = pin 20 = GPIO_15, send data from PI
 
+assign GPIO_0_PI[13] = spi_cs ? 1'bz : spi_miso;  // MISO = pin 18 = GPIO_13, received data from PI
+
 //Usefull signals
 logic reset_enc_LEFT_WHEEL_SPI;
 logic reset_enc_RIGHT_WHEEL_SPI;
+logic resetUltrasonicSPI;
+logic resetPneumaticSPI;
+logic [31:0] commandPneumaticSPI;
+
+//=======================================================
+//  ENABLE VOLTAGE TRANSLATOR
+//=======================================================
+assign GPIO_1[32] = 1;
 
 //=======================================================
 //  DYNAMIXEL
@@ -177,59 +187,66 @@ assign RPi_UART_RX 	= GPIO_1[4];
 assign GPIO_0_PI[26] 	= RPi_UART_RX;
 
 assign RPi_UART_DIR 	= GPIO_0_PI[21];
-assign GPIO_1[2] 	= RPi_UART_RX;
-
-
+assign GPIO_1[2] 	= RPi_UART_DIR;
 //=======================================================
 //Pneumatic computation
 //=======================================================
 
 logic valve1,valve2,piston1,piston2,piston3; 
+logic resetPneumatic;
 
-assign GPIO_1[22] = valve1 ;
-assign GPIO_1[20] = valve2 ;
-assign GPIO_1[18] = piston1;
-assign GPIO_1[16] = piston2;
-assign GPIO_1[14] = piston3;
+assign GPIO_1[14] = 1'b0;//valve1 ;
+assign GPIO_1[20] = 1'b0;//valve2 ;
+assign GPIO_1[16] = 1'b0;//piston1;
+assign GPIO_1[18] = 1'b0;//piston2;
+assign GPIO_1[22] = 1'b0;// piston3;
 
-assign valve1 = 1'b1;
-assign valve2 = 1'b1;
-assign piston1 = 1'b1;
-assign piston2 = 1'b1;
-assign piston3 = 1'b1;
+//logic [31:0] counter1;
+//counterUltrasonic my_count(.clk(clk),
+//			   .reset(reset),
+//			   .counter(counter1));
 
-/*pneumatic (CLOCK_50,
-					reset,
-					 signalrasp
-					 signal1,
-					 signal2,
-					 signal3
-					 signal4
-					);*/
 
+
+pneumatic pneuma (.clk(clk),
+					.reset(resetPneumatic),
+					.signalrasp(commandPneumaticSPI[3:0]),
+					//.signalrasp(counter1[27:24]),
+					.valve1(valve1), 
+					.valve2(valve2), 
+					.piston1(piston1), 
+					.piston2(piston2), 
+					.piston3(piston3)
+					);
 
 //=======================================================
 //Ultrasonic sensor
 //=======================================================
 logic trig1,trig2,trig3,trig4;
 logic echo1,echo2,echo3,echo4;
-logic [31:0] count_max_ultrasonic_sensor,deltaT_ultrasonic1,deltaT_ultrasonic2,deltaT_ultrasonic3,deltaT_ultrasonic4;
+logic [31:0] count_max_ultrasonic_sensor,count1,deltaT_ultrasonic1,deltaT_ultrasonic2,deltaT_ultrasonic3,deltaT_ultrasonic4;
 logic resetUltrasonic;
-logic resetUltrasonicSPI;
+logic [3:0]stateFSM1,stateFSM2,stateFSM3,stateFSM4; 
 
-assign count_max_ultrasonic_sensor = 32'd10000000;
+
+assign count_max_ultrasonic_sensor = 32'd50000000;
+
+
 
 assign echo1 = GPIO_1[17];
 assign echo2 = GPIO_1[13];	
 assign echo3 = GPIO_1[7];  
 assign echo4 = GPIO_1[3];
 
+					
+
+//logic [31:0] TesTregister;
+//counterU testCounter(clk, reset,  TesTregister); 
+ 
 assign GPIO_1[15] = trig1;
 assign GPIO_1[11] = trig2;	
-assign GPIO_1[5] = trig3;
-assign GPIO_1[1] = trig4;
-
-
+assign GPIO_1[5] =  trig3;
+assign GPIO_1[1] =  trig4;
 
 ultrasonic_sensor ultraSonic1(CLOCK_50,resetUltrasonic,count_max_ultrasonic_sensor,echo1,trig1,deltaT_ultrasonic1);
 ultrasonic_sensor ultraSonic2(CLOCK_50,resetUltrasonic,count_max_ultrasonic_sensor,echo2,trig2,deltaT_ultrasonic2);
@@ -256,28 +273,32 @@ assign LbO = GPIO_1[31];
 assign RaO = GPIO_1[28];
 assign RbO = GPIO_1[26];
 
-//encodeur right
+//encodeur right position
 quadrature_decoder encoder_decoderLEFT_WHEEL_M(CLOCK_50, reset_enc_LEFT_WHEEL, LaE, LbE, enc_counter_LEFT_WHEEL_M);
-// encodeur left
+// encodeur left position
 quadrature_decoder encoder_decoderRIGHT_WHEEL_M(CLOCK_50, reset_enc_RIGHT_WHEEL, RaE, RbE, enc_counter_RIGHT_WHEEL_M);
-// Odometer left
-quadrature_decoder encoder_decoderLEFT_WHEEL_O(CLOCK_50, reset_enc_LEFT_WHEEL, LaO, LbO, enc_counter_LEFT_WHEEL_O);
-// Odometer right
+// Odometer right position
 quadrature_decoder encoder_decoderRIGHT_WHEEL_O(CLOCK_50, reset_enc_RIGHT_WHEEL, RaO, RbO, enc_counter_RIGHT_WHEEL_O);
+// Odometer left position
+quadrature_decoder encoder_decoderLEFT_WHEEL_O(CLOCK_50, reset_enc_LEFT_WHEEL, LaO, LbO, enc_counter_LEFT_WHEEL_O);
+
 
 
 //=======================================================
 //  Speed computations
 //=======================================================
 
-logic [31:0]	speed_LEFT_WHEEL, speed_RIGHT_WHEEL;
+logic [31:0]	speed_LEFT_WHEEL_M, speed_RIGHT_WHEEL_M,speed_LEFT_WHEEL_O, speed_RIGHT_WHEEL_O;
 logic 			reset_speed_LEFT_WHEEL, reset_speed_RIGHT_WHEEL;
 
-// LEFT motor position
-rotation_speed rotation_speedLEFT_WHEEL(CLOCK_50, reset_speed_LEFT_WHEEL, enc_counter_LEFT_WHEEL_M, speed_LEFT_WHEEL);
-
-// RIGHT motor position
-rotation_speed rotation_speedRIGHT_WHEEL(CLOCK_50, reset_speed_RIGHT_WHEEL, enc_counter_RIGHT_WHEEL_M, speed_RIGHT_WHEEL);
+//encodeur right speed
+rotation_speed rotation_speedRIGHT_WHEEL_M(CLOCK_50, reset_speed_RIGHT_WHEEL, enc_counter_RIGHT_WHEEL_M, speed_RIGHT_WHEEL_M);
+//encodeur left speed
+rotation_speed rotation_speedLEFT_WHEEL_M(CLOCK_50, reset_speed_LEFT_WHEEL, enc_counter_LEFT_WHEEL_M, speed_LEFT_WHEEL_M);
+//odometer right speed 
+rotation_speed rotation_speedRIGHT_WHEEL_O(CLOCK_50, reset_speed_RIGHT_WHEEL, enc_counter_RIGHT_WHEEL_O, speed_RIGHT_WHEEL_O);
+//odometer left speed
+rotation_speed rotation_speedLEFT_WHEEL_O(CLOCK_50, reset_speed_LEFT_WHEEL, enc_counter_LEFT_WHEEL_O, speed_LEFT_WHEEL_O);
 
 //=======================================================
 //  Actions to be done
@@ -314,19 +335,16 @@ always_comb
 	case (registerCount) 
 		4'd0:  WriteDataM = enc_counter_LEFT_WHEEL_M; 	// motor left wheel position R1
 		4'd1:  WriteDataM = enc_counter_RIGHT_WHEEL_M;	// motor right wheel position R2
-		4'd2:  WriteDataM = enc_counter_LEFT_WHEEL_O;
+		4'd2:  WriteDataM = enc_counter_LEFT_WHEEL_O;	
 		4'd3:  WriteDataM = enc_counter_RIGHT_WHEEL_O;
-		4'd4:  WriteDataM = speed_LEFT_WHEEL;
-		4'd5:  WriteDataM = speed_RIGHT_WHEEL;
-		4'd6:  WriteDataM = deltaT_ultrasonic1;
-		4'd7:  WriteDataM = deltaT_ultrasonic2;
-		4'd8:  WriteDataM = deltaT_ultrasonic3;
-		4'd9:  WriteDataM = deltaT_ultrasonic4;
-		// 4'd10:  WriteDataM = 
-		// 4'd11:  WriteDataM = 
-		// 4'd12:  WriteDataM = 
-		// 4'd13:  WriteDataM = 
-		
+		4'd4:  WriteDataM = speed_LEFT_WHEEL_M;
+		4'd5:  WriteDataM = speed_RIGHT_WHEEL_M;
+		4'd6:	 WriteDataM = speed_LEFT_WHEEL_O;
+		4'd7:  WriteDataM = speed_RIGHT_WHEEL_O;
+//		4'd8:  WriteDataM = deltaT_ultrasonic1;
+//		4'd7:  WriteDataM = deltaT_ultrasonic2;
+//		4'd10:  WriteDataM = deltaT_ultrasonic3;
+//		4'd11:  WriteDataM = deltaT_ultrasonic4;
 		default: WriteDataM = 32'h00000000;
 	endcase
 
@@ -337,6 +355,8 @@ always_ff @(posedge clk)
 		4'd0:  reset_enc_LEFT_WHEEL_SPI = ReadDataM[0]; // reset signal for the LEFT wheel R1      
 		4'd1:  reset_enc_RIGHT_WHEEL_SPI = ReadDataM[0]; // reset signal for the RIGHT wheel R2
 		4'd2:  resetUltrasonicSPI = ReadDataM[0]; // reset signal for the RIGHT wheel R2
+		4'd3:  resetPneumaticSPI = ReadDataM[0] ;
+		4'd4:  commandPneumaticSPI = ReadDataM;
 	endcase	
 
 
@@ -344,29 +364,33 @@ always_ff @(posedge clk)
 always_ff @ (posedge clk, posedge reset) 
 	if (reset)
 		begin // Reset the counter and light on all the led to see that it is well reset
-//			LED = 8'hff;
+			LED = 8'hff;
 			reset_enc_LEFT_WHEEL = 1'b1;
 			reset_enc_RIGHT_WHEEL = 1'b1;
 			reset_speed_LEFT_WHEEL = 1'b1;
 			reset_speed_RIGHT_WHEEL = 1'b1;
 			resetUltrasonic = 1'b1;
+			resetPneumatic = 1'b1;
 			
 		end		
 	else
 		begin 
-//			LED = led_reg;
+			LED = led_reg;
 			reset_enc_LEFT_WHEEL = reset_enc_LEFT_WHEEL_SPI;
 			reset_enc_RIGHT_WHEEL = reset_enc_RIGHT_WHEEL_SPI;
 			reset_speed_LEFT_WHEEL = 1'b0;
 			reset_speed_RIGHT_WHEEL = 1'b0;
 			resetUltrasonic = resetUltrasonicSPI;
+			resetPneumatic = resetPneumaticSPI;
 		end
 	
 
 // To use the LED	
 always_ff@(posedge clk)
 begin
-	led_reg[7:0] = enc_counter_LEFT_WHEEL_O[7:0];
+	led_reg[3:0] = enc_counter_LEFT_WHEEL_M[3:0];
+	led_reg[7:4] = enc_counter_RIGHT_WHEEL_M[3:0];
+	//led_reg[3:0] = counter1[30:27];
 	
 end
 endmodule
@@ -387,3 +411,4 @@ endmodule
 
 
 		
+
