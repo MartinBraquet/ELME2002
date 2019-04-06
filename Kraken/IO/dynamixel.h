@@ -14,6 +14,7 @@
 
 #include	<stdio.h>
 #include	<time.h>
+#include	<math.h>
 #include	<unistd.h>			// for UART
 #include	<wiringPi.h>
 #include	<wiringSerial.h>
@@ -41,7 +42,7 @@ typedef unsigned char Byte; //integer of 8 bits
 #define ANG_VEL_STD			0x300		// 0x300 = 108RPM = 18deg/s
 #define ANG_VEL_114_RPM		0x3ff
 
-#define CLOCKWISE_OFFSET	0x300
+#define CLOCKWISE_OFFSET	0x400
 #define RPM_TO_DEGPS		6
 #define DEGPS_TO_BITS		0.02346	
 #define BITS_TO_DEGPS		42.625
@@ -103,9 +104,9 @@ typedef unsigned char Byte; //integer of 8 bits
 /*************************************************************************
 * Internal global variables						                                     *
 **************************************************************************/
-int dynamixel_uart_direction;
+extern int dynamixel_uart_direction;
 
-int uart0_filestream;
+extern int uart0_filestream;
 
 /*************************************************************************
 * Functions Prototypes				                                     *

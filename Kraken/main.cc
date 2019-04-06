@@ -8,15 +8,19 @@
 #include "regulation/speed_controller_gr3.h"
 #include "regulation/speed_regulation_gr3.h"
 #include "localization/triangulation_gr3.h"
+#include "localization/init_pos_gr3.h"
+#include "localization/odometry_gr3.h"
 #include "localization/lidar.h"
 #include "localization/sensor_merging_gr3.h"
 #include "useful/mytime.h"
 #include "useful/getch_keyboard.h"
+#include "IO/dynamixel.h"
 #include <pthread.h>
 #include <SDL2/SDL.h>
 
 #define LIDAR_ENABLED 1
 #define KEYBOARD_COMMAND 10.0
+#define PRINT_FPGA 0
 
 void get_FPGA_data(CtrlStruct *cvs, unsigned char *buffer, SPI *spi)
 {
@@ -26,52 +30,64 @@ void get_FPGA_data(CtrlStruct *cvs, unsigned char *buffer, SPI *spi)
 	buffer[0] = 0x00; // motor encoder left wheel angle
 	wiringPiSPIDataRW(channel, buffer, 5);
 	inputs->motor_enc_l_wheel_angle = compute_angle_wheel_motor(spi->frombytes(5, buffer));
-	//printf("motor_enc_l_wheel_angle: %lf \n", inputs->motor_enc_l_wheel_angle);
+	#if PRINT_FPGA
+		printf("motor_enc_l_wheel_angle: %lf \n", inputs->motor_enc_l_wheel_angle);
+	#endif
 
 	buffer[0] = 0x01; // motor encoder right wheel angle
 	wiringPiSPIDataRW(channel, buffer, 5);
 	inputs->motor_enc_r_wheel_angle = -compute_angle_wheel_motor(spi->frombytes(5, buffer));
-	//printf("motor_enc_r_wheel_angle: %lf \n", inputs->motor_enc_r_wheel_angle);
+	#if PRINT_FPGA
+		printf("motor_enc_r_wheel_angle: %lf \n", inputs->motor_enc_r_wheel_angle);
+	#endif
 	
 	buffer[0] = 0x03; // odometer encoder left wheel angle
 	wiringPiSPIDataRW(channel, buffer, 5);
 	inputs->odo_l_wheel_angle = compute_angle_wheel_odo(spi->frombytes(5, buffer));
-	//printf("odo_l_wheel_angle: %lf \n", inputs->odo_l_wheel_angle);
+	#if PRINT_FPGA
+		printf("odo_l_wheel_angle: %lf \n", inputs->odo_l_wheel_angle);
+	#endif
 		 
 	buffer[0] = 0x02; // odometer encoder right wheel angle
 	wiringPiSPIDataRW(channel, buffer, 5);
 	inputs->odo_r_wheel_angle = compute_angle_wheel_odo(spi->frombytes(5, buffer));
-	//printf("odo_r_wheel_angle: %lf \n", inputs->odo_r_wheel_angle);
+	#if PRINT_FPGA
+		printf("odo_r_wheel_angle: %lf \n", inputs->odo_r_wheel_angle);
+	#endif
 			
 	buffer[0] = 0x04; // motor encoder left wheel speed
 	wiringPiSPIDataRW(channel, buffer, 5);
 	inputs->motor_enc_l_wheel_speed = compute_speed_wheel_motor(spi->frombytes(5, buffer));
-	//printf("motor_enc_l_wheel_speed: %lf \n", inputs->motor_enc_l_wheel_speed);
+	#if PRINT_FPGA
+		printf("motor_enc_l_wheel_speed: %lf \n", inputs->motor_enc_l_wheel_speed);
+	#endif
 
 	buffer[0] = 0x05; // motor encoder right wheel speed
 	wiringPiSPIDataRW(channel, buffer, 5);
 	inputs->motor_enc_r_wheel_speed = -compute_speed_wheel_motor(spi->frombytes(5, buffer));
-	//printf("motor_enc_r_wheel_speed: %lf \n", inputs->motor_enc_r_wheel_speed);
+	#if PRINT_FPGA
+		printf("motor_enc_r_wheel_speed: %lf \n", inputs->motor_enc_r_wheel_speed);
+	#endif
 	
 	buffer[0] = 0x07; // odometer encoder left wheel speed
 	wiringPiSPIDataRW(channel, buffer, 5);
-	inputs->odo_l_wheel_speed = compute_speed_wheel_odo(spi->frombytes(5, buffer));
-	//printf("odo_l_wheel_speed: %lf \n", inputs->odo_l_wheel_speed);
+	inputs->odo_l_wheel_speed = -compute_speed_wheel_odo(spi->frombytes(5, buffer));
+	#if PRINT_FPGA
+		printf("odo_l_wheel_speed: %lf \n", inputs->odo_l_wheel_speed);
+	#endif
 	
 	buffer[0] = 0x06; // odometer encoder right wheel speed
 	wiringPiSPIDataRW(channel, buffer, 5);
 	inputs->odo_r_wheel_speed = compute_speed_wheel_odo(spi->frombytes(5, buffer));
-	//printf("odo_r_wheel_speed: %lf \n\n", inputs->odo_r_wheel_speed);
+	#if PRINT_FPGA
+		printf("odo_r_wheel_speed: %lf \n\n", inputs->odo_r_wheel_speed);
+	#endif
 
-/*		
+
 	//Pneumatic part
-	buffer[0] = 0x08; // motor encoder right wheel speed
+	buffer[0] = 0x84;
+	buffer[4] = 0x01;
 	wiringPiSPIDataRW(channel, buffer, 5);
-*/
-	
-
-	
-
 
 /*
 	//data ultrasonic sensor
@@ -93,6 +109,11 @@ void get_FPGA_data(CtrlStruct *cvs, unsigned char *buffer, SPI *spi)
 */	
 }
 
+
+
+
+
+
 void *LIDAR_task(void *ptr) {
 
 	printf("START: LIDAR task\n");
@@ -106,8 +127,11 @@ void *LIDAR_task(void *ptr) {
 		//printf("LIDAR loop\n");
 		get_LIDAR_data(cvs);
 		triangulation_mean_data(cvs);
-		triangulation_angles(cvs);
-		//mergeSensorData(cvs);
+		triangulation(cvs);
+		triangulation_distances_all_three(cvs);
+		triangulation_distances_two_nearest(cvs);
+		printf("GUESSED      : x:%1.5f [m] ; y:%1.5f [m] ; theta:%1.5f [deg]\n", cvs->rob_pos->x, cvs->rob_pos->y, cvs->rob_pos->theta * 180 / M_PI);
+		mergeSensorData(cvs);
 	}
 
 	free_LIDAR(cvs);
@@ -180,7 +204,18 @@ void *keyboard_task(void *ptr) {
                             cvs->keyboard = 1;
                             quit++;
                             break;
-                        default : break;
+						case SDLK_d:
+							dynamixelSetGoalPosition(0x01, 0x300);
+							sleep(2);
+							dynamixelSetGoalPosition(0x01, 0x0);
+							sleep(2);
+							break;
+						case SDLK_p:
+							buffer[0] = 0x01;
+							buffer[4] = 0x80;
+							wiringPiSPIDataRW(channel, buffer, 5);
+							break;
+						default : break;
                     }
                     break;
                 case SDL_KEYUP:
@@ -208,13 +243,13 @@ void *keyboard_task(void *ptr) {
 		if (quit == 1) {	
 			cvs->inputs->t = get_time() - start_time;
 			get_FPGA_data(cvs, buffer, spi);
+			update_odometry(cvs);
 			speed_regulation(cvs, V + W, V - W);
+			//printf("GUESSED      : x:%1.5f [m] ; y:%1.5f [m] ; theta:%1.5f [deg]\n", cvs->rob_pos->x, cvs->rob_pos->y, cvs->rob_pos->theta * 180 / M_PI);
 			//printf("Wheel commands: %1.3f %1.3f\n", cvs->outputs->wheel_commands[R_ID], cvs->outputs->wheel_commands[L_ID]);
 			cvs->can->push_PropDC(10+cvs->outputs->wheel_commands[R_ID], 10-cvs->outputs->wheel_commands[L_ID]);
 		}
     }
-
-
 
 	printf("END: keyboard\n");
 	
@@ -281,11 +316,11 @@ int main()
 	//pthread_t web_thread;
 	//pthread_create(&web_thread, NULL, web_task, (void*) cvs);
 
-	if (LIDAR_ENABLED) {
+	#if LIDAR_ENABLED
 		pthread_t LIDAR_thread;
 		pthread_create(&LIDAR_thread, NULL, LIDAR_task, (void*) cvs);
 		pthread_join(LIDAR_thread, NULL); 
-	}
+	#endif
 
 	pthread_join(main_thread, NULL);
 	pthread_join(keyboard_thread, NULL);

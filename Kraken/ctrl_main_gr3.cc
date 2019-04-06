@@ -15,6 +15,7 @@
 #include "localization/opp_pos_gr3.h"
 #include "regulation/speed_regulation_gr3.h"
 #include "regulation/speed_controller_gr3.h"
+#include "IO/dynamixel.h"
 #include "strategy/strategy_gr3.h"
 #include "path/path_planning_gr3.h"
 #include "simu_game_gr3.h"
