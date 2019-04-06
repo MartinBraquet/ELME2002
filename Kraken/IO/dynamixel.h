@@ -39,6 +39,8 @@ typedef unsigned char Byte; //integer of 8 bits
 #define ON 		1
 #define OFF 	0
 
+#define DYNAMIXEL_ELEVATOR_ID	0xFE
+
 #define ANG_VEL_STD			0x300		// 0x300 = 108RPM = 18deg/s
 #define ANG_VEL_114_RPM		0x3ff
 
@@ -104,8 +106,8 @@ typedef unsigned char Byte; //integer of 8 bits
 /*************************************************************************
 * Internal global variables						                                     *
 **************************************************************************/
-extern int dynamixel_uart_direction;
-
+//extern int dynamixel_uart_direction;
+//
 extern int uart0_filestream;
 
 /*************************************************************************
