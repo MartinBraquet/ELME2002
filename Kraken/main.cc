@@ -15,10 +15,11 @@
 #include "useful/mytime.h"
 #include "useful/getch_keyboard.h"
 #include "IO/dynamixel.h"
+#include "IO/pneumatics.h"
 #include <pthread.h>
 #include <SDL2/SDL.h>
 
-#define LIDAR_ENABLED 1
+#define LIDAR_ENABLED 0
 #define KEYBOARD_COMMAND 10.0
 #define PRINT_FPGA 0
 
@@ -85,9 +86,9 @@ void get_FPGA_data(CtrlStruct *cvs, unsigned char *buffer, SPI *spi)
 
 
 	//Pneumatic part
-	buffer[0] = 0x84;
-	buffer[4] = 0x01;
-	wiringPiSPIDataRW(channel, buffer, 5);
+	//buffer[0] = 0x84;
+	//buffer[4] = 0x01;
+	//wiringPiSPIDataRW(channel, buffer, 5);
 
 /*
 	//data ultrasonic sensor
@@ -168,6 +169,7 @@ void *keyboard_task(void *ptr) {
 	SDL_Init(SDL_INIT_VIDEO);
     SDL_Window * window = SDL_CreateWindow("Kraken - ELME2002", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 320, 240, 0);
 
+	dynamixelSetup();
 
 	printf("KEYBOARD mode\n");
 
@@ -205,16 +207,56 @@ void *keyboard_task(void *ptr) {
                             quit++;
                             break;
 						case SDLK_d:
-							dynamixelSetGoalPosition(0x01, 0x300);
+							dynamixelSetJointMode(DYNAMIXEL_ELEVATOR_ID);
+							dynamixelSetGoalPosition(DYNAMIXEL_ELEVATOR_ID, 0x300);
 							sleep(2);
-							dynamixelSetGoalPosition(0x01, 0x0);
+							dynamixelSetGoalPosition(DYNAMIXEL_ELEVATOR_ID, 0x0);
 							sleep(2);
 							break;
 						case SDLK_p:
-							buffer[0] = 0x01;
-							buffer[4] = 0x80;
+							// writes 1 to all the pneumatic parts
+							buffer[0] = 0xff;
+							buffer[4] = 0x84;
 							wiringPiSPIDataRW(channel, buffer, 5);
 							break;
+						case SDLK_1:
+							// turn on pump1
+							buffer[0] = VOID_PUMP_1_MASK;
+							buffer[4] = 0x84;
+							wiringPiSPIDataRW(channel, buffer, 5);
+
+							// lift up elevator
+							dynamixelSetWheelMode(DYNAMIXEL_ELEVATOR_ID);
+							dynamixelSetVelocity(DYNAMIXEL_ELEVATOR_ID, 0x3ff + 0x400);
+							usleep(2.15 * 1000000);
+							dynamixelSetVelocity(DYNAMIXEL_ELEVATOR_ID, 0);
+
+							// advance pistons 1st stage
+							buffer[0] = VOID_PUMP_1_MASK | PISTON_1_MASK | PISTON_2_MASK;
+							buffer[4] = 0x84;
+							wiringPiSPIDataRW(channel, buffer, 5);
+							usleep(2000000);
+
+							// retract big piston 1st stage
+							buffer[0] = VOID_PUMP_1_MASK | PISTON_2_MASK;
+							buffer[4] = 0x84;
+							wiringPiSPIDataRW(channel, buffer, 5);
+							usleep(2000000);
+
+							// release atoms
+							buffer[0] = PISTON_2_MASK;
+							buffer[4] = 0x84;
+							wiringPiSPIDataRW(channel, buffer, 5);
+							usleep(2000000);
+
+							// lift down dynamixel
+							dynamixelSetWheelMode(DYNAMIXEL_ELEVATOR_ID);
+							dynamixelSetVelocity(DYNAMIXEL_ELEVATOR_ID, 0x3ff);
+							usleep(1.75 * 1000000);
+							dynamixelSetVelocity(DYNAMIXEL_ELEVATOR_ID, 0);
+
+							break;
+
 						default : break;
                     }
                     break;
@@ -238,7 +280,7 @@ void *keyboard_task(void *ptr) {
                     break;
                 default : break;
 		    }
-			printf("V_l = %lf   V_r = %lf\n", V + W, V - W);
+			//printf("V_l = %lf   V_r = %lf\n", V + W, V - W);
         }
 		if (quit == 1) {	
 			cvs->inputs->t = get_time() - start_time;
