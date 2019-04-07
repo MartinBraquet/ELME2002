@@ -17,6 +17,8 @@
 #include "IO/dynamixel.h"
 #include "IO/pneumatics.h"
 #include <pthread.h>
+#include <semaphore.h>
+#include <fcntl.h>
 #include <SDL2/SDL.h>
 
 #define LIDAR_ENABLED 0
@@ -164,6 +166,9 @@ void *keyboard_task(void *ptr) {
 	unsigned char buffer[100];
 	SPI *spi = cvs->spi;
 	
+	sem_t *actions_semaphore;
+	actions_semaphore = sem_open("/actions_semaphore", O_CREAT);
+
 	double start_time = get_time();
 	
 	SDL_Init(SDL_INIT_VIDEO);
@@ -203,7 +208,7 @@ void *keyboard_task(void *ptr) {
 							W = KEYBOARD_COMMAND / 2.0;
                             break;
                         case SDLK_q:
-                            cvs->keyboard = 1;
+                            cvs->keyboard++;
                             quit++;
                             break;
 						case SDLK_d:
@@ -256,43 +261,9 @@ void *keyboard_task(void *ptr) {
 							wiringPiSPIDataRW(channel, buffer, 5);
 							break;
 						case SDLK_9:
-							// turn on pump1
-							//buffer[4] = VOID_PUMP_1_MASK;
-							//buffer[0] = 0x84;
-							//wiringPiSPIDataRW(channel, buffer, 5);
-
-							//// lift up elevator
-							//dynamixelSetWheelMode(DYNAMIXEL_ELEVATOR_ID);
-							//dynamixelSetVelocity(DYNAMIXEL_ELEVATOR_ID, 0x3ff + 0x400);
-							//usleep(2.15 * 1000000);
-							//dynamixelSetVelocity(DYNAMIXEL_ELEVATOR_ID, 0);
-
-							// advance pistons 1st stage
-							buffer[4] = VOID_PUMP_1_MASK | PISTON_1_MASK | PISTON_2_MASK;
-							buffer[0] = 0x84;
-							wiringPiSPIDataRW(channel, buffer, 5);
-							usleep(2000000);
-
-							// retract big piston 1st stage
-							buffer[4] = VOID_PUMP_1_MASK | PISTON_2_MASK;
-							buffer[0] = 0x84;
-							wiringPiSPIDataRW(channel, buffer, 5);
-							usleep(2000000);
-
-							// release atoms
-							buffer[4] = PISTON_2_MASK;
-							buffer[0] = 0x84;
-							wiringPiSPIDataRW(channel, buffer, 5);
-							usleep(2000000);
-
-							//// lift down dynamixel
-							//dynamixelSetWheelMode(DYNAMIXEL_ELEVATOR_ID);
-							//dynamixelSetVelocity(DYNAMIXEL_ELEVATOR_ID, 0x3ff);
-							//usleep(1.75 * 1000000);
-							//dynamixelSetVelocity(DYNAMIXEL_ELEVATOR_ID, 0);
-
+							printf("posting semaphore\n");
+							sem_post(actions_semaphore);
 							break;
-
 						case SDLK_8:
 							// piston 3 +, pump 2 on
 							buffer[4] = VOID_PUMP_2_MASK | PISTON_3_MASK;
@@ -356,6 +327,76 @@ void *keyboard_task(void *ptr) {
 
 }
 
+void* actions_task(void *ptr) {
+	sem_t *actions_semaphore;
+
+	actions_semaphore = sem_open("/actions_semaphore", O_CREAT);
+	sem_init(actions_semaphore, 0, 1);
+	struct timespec ts;
+	int sem_status;
+
+	CtrlStruct *cvs = (CtrlStruct*)ptr;
+	unsigned char buffer[100];
+	SPI *spi = cvs->spi;
+
+	dynamixelSetup();
+
+	printf("START: actions task\n");
+
+	while (cvs->keyboard < 2) {
+		clock_gettime(CLOCK_REALTIME, &ts);
+		ts.tv_sec += 5;
+		sem_status = sem_timedwait(actions_semaphore, &ts);
+		
+		if (sem_status == 0) {
+			//		sem_wait(actions_semaphore);
+			printf("CONGRATULATIONS, YOUR SEMAPHORE IS WORKING\n");
+
+			// turn on pump1
+			//buffer[4] = VOID_PUMP_1_MASK;
+			//buffer[0] = 0x84;
+			//wiringPiSPIDataRW(channel, buffer, 5);
+
+			//// lift up elevator
+			//dynamixelSetWheelMode(DYNAMIXEL_ELEVATOR_ID);
+			//dynamixelSetVelocity(DYNAMIXEL_ELEVATOR_ID, 0x3ff + 0x400);
+			//usleep(2.15 * 1000000);
+			//dynamixelSetVelocity(DYNAMIXEL_ELEVATOR_ID, 0);
+
+			// advance pistons 1st stage
+			buffer[4] = VOID_PUMP_1_MASK | PISTON_1_MASK | PISTON_2_MASK;
+			buffer[0] = 0x84;
+			wiringPiSPIDataRW(channel, buffer, 5);
+			usleep(2000000);
+
+			// retract big piston 1st stage
+			buffer[4] = VOID_PUMP_1_MASK | PISTON_2_MASK;
+			buffer[0] = 0x84;
+			wiringPiSPIDataRW(channel, buffer, 5);
+			usleep(2000000);
+
+			// release atoms
+			buffer[4] = PISTON_2_MASK;
+			buffer[0] = 0x84;
+			wiringPiSPIDataRW(channel, buffer, 5);
+			usleep(2000000);
+
+			//// lift down dynamixel
+			//dynamixelSetWheelMode(DYNAMIXEL_ELEVATOR_ID);
+			//dynamixelSetVelocity(DYNAMIXEL_ELEVATOR_ID, 0x3ff);
+			//usleep(1.75 * 1000000);
+			//dynamixelSetVelocity(DYNAMIXEL_ELEVATOR_ID, 0);
+		}
+
+	}
+
+	sem_close(actions_semaphore);
+	printf("END: actions task\n");
+	return 0;
+
+
+}
+
 
 void *main_task(void *ptr) {
 	printf("START: main task\n");
@@ -404,6 +445,9 @@ int main()
 	controller_init(cvs);
 	printf("Kraken fully initialized \n");
 
+	pthread_t actions_thread;
+	pthread_create(&actions_thread, NULL, actions_task, (void*)cvs);
+
 	pthread_t keyboard_thread;
 	pthread_create(&keyboard_thread, NULL, keyboard_task, (void*) cvs);
 
@@ -420,6 +464,7 @@ int main()
 	#endif
 
 	pthread_join(main_thread, NULL);
+	pthread_join(actions_thread, NULL);
 	pthread_join(keyboard_thread, NULL);
 
 	controller_finish(cvs);
