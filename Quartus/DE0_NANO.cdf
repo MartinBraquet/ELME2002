@@ -4,7 +4,7 @@ JedecChain;
 	DefaultMfr(6E);
 
 	P ActionCode(Cfg)
-		Device PartName(EP4CE22) Path("C:/Users/arthur/Desktop/ELME_2002/ELME2002/Quartus/") File("output_file.jic") MfrSpec(OpMask(1) SEC_Device(EPCS64) Child_OpMask(1 3));
+		Device PartName(EP4CE22F17) Path("C:/Users/arthur/Desktop/ELME_2002/ELME2002/Quartus/") File("DE0_NANO.sof") MfrSpec(OpMask(1));
 
 ChainEnd;
 
