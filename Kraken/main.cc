@@ -219,6 +219,12 @@ void *keyboard_task(void *ptr) {
 							buffer[0] = 0x84;
 							wiringPiSPIDataRW(channel, buffer, 5);
 							break;
+						case SDLK_p:
+							printf("set all pneumatics\n");
+							buffer[4] = VOID_PUMP_1_MASK;
+							buffer[0] = 0x84;
+							wiringPiSPIDataRW(channel, buffer, 5);
+							break;
 						case SDLK_1:
 							printf("void pump 1\n");
 							buffer[4] = VOID_PUMP_1_MASK;
@@ -226,7 +232,7 @@ void *keyboard_task(void *ptr) {
 							wiringPiSPIDataRW(channel, buffer, 5);
 							break;
 						case SDLK_2:
-							printf("void pump 1\n");
+							printf("void pump 2\n");
 							buffer[4] = VOID_PUMP_2_MASK;
 							buffer[0] = 0x84;
 							wiringPiSPIDataRW(channel, buffer, 5);
