@@ -215,8 +215,8 @@ void *keyboard_task(void *ptr) {
 							break;
 						case SDLK_p:
 							// writes 1 to all the pneumatic parts
-							buffer[0] = 0xff;
-							buffer[4] = 0x84;
+							buffer[4] = 0xff;
+							buffer[0] = 0x84;
 							wiringPiSPIDataRW(channel, buffer, 5);
 							break;
 						case SDLK_1:

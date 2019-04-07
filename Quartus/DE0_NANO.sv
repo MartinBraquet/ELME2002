@@ -380,8 +380,8 @@ always_ff @ (posedge clk, posedge reset)
 		end		
 	else
 		begin 
-			//LED = led_reg;
-			LED = commandPneumaticSPI[7:0];
+			LED = led_reg;
+			//LED = commandPneumaticSPI[7:0];
 			reset_enc_LEFT_WHEEL = reset_enc_LEFT_WHEEL_SPI;
 			reset_enc_RIGHT_WHEEL = reset_enc_RIGHT_WHEEL_SPI;
 			reset_speed_LEFT_WHEEL = 1'b0;
