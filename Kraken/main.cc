@@ -213,49 +213,98 @@ void *keyboard_task(void *ptr) {
 							dynamixelSetGoalPosition(DYNAMIXEL_ELEVATOR_ID, 0x0);
 							sleep(2);
 							break;
-						case SDLK_p:
-							// writes 1 to all the pneumatic parts
-							buffer[4] = 0xff;
+						case SDLK_0:
+							printf("reset pneumatics 1\n");
+							buffer[4] = 0;
 							buffer[0] = 0x84;
 							wiringPiSPIDataRW(channel, buffer, 5);
 							break;
 						case SDLK_1:
-							// turn on pump1
-							buffer[0] = VOID_PUMP_1_MASK;
-							buffer[4] = 0x84;
+							printf("void pump 1\n");
+							buffer[4] = VOID_PUMP_1_MASK;
+							buffer[0] = 0x84;
 							wiringPiSPIDataRW(channel, buffer, 5);
+							break;
+						case SDLK_2:
+							printf("void pump 1\n");
+							buffer[4] = VOID_PUMP_2_MASK;
+							buffer[0] = 0x84;
+							wiringPiSPIDataRW(channel, buffer, 5);
+							break;
+						case SDLK_3:
+							printf("piston 1\n");
+							buffer[4] = PISTON_1_MASK;
+							buffer[0] = 0x84;
+							wiringPiSPIDataRW(channel, buffer, 5);
+							break;
+						case SDLK_4:
+							printf("piston 2\n");
+							buffer[4] = PISTON_2_MASK;
+							buffer[0] = 0x84;
+							wiringPiSPIDataRW(channel, buffer, 5);
+							break;
+						case SDLK_5:
+							printf("piston 3\n");
+							buffer[4] = PISTON_3_MASK;
+							buffer[0] = 0x84;
+							wiringPiSPIDataRW(channel, buffer, 5);
+							break;
+						case SDLK_9:
+							// turn on pump1
+							//buffer[4] = VOID_PUMP_1_MASK;
+							//buffer[0] = 0x84;
+							//wiringPiSPIDataRW(channel, buffer, 5);
 
-							// lift up elevator
-							dynamixelSetWheelMode(DYNAMIXEL_ELEVATOR_ID);
-							dynamixelSetVelocity(DYNAMIXEL_ELEVATOR_ID, 0x3ff + 0x400);
-							usleep(2.15 * 1000000);
-							dynamixelSetVelocity(DYNAMIXEL_ELEVATOR_ID, 0);
+							//// lift up elevator
+							//dynamixelSetWheelMode(DYNAMIXEL_ELEVATOR_ID);
+							//dynamixelSetVelocity(DYNAMIXEL_ELEVATOR_ID, 0x3ff + 0x400);
+							//usleep(2.15 * 1000000);
+							//dynamixelSetVelocity(DYNAMIXEL_ELEVATOR_ID, 0);
 
 							// advance pistons 1st stage
-							buffer[0] = VOID_PUMP_1_MASK | PISTON_1_MASK | PISTON_2_MASK;
-							buffer[4] = 0x84;
+							buffer[4] = VOID_PUMP_1_MASK | PISTON_1_MASK | PISTON_2_MASK;
+							buffer[0] = 0x84;
 							wiringPiSPIDataRW(channel, buffer, 5);
 							usleep(2000000);
 
 							// retract big piston 1st stage
-							buffer[0] = VOID_PUMP_1_MASK | PISTON_2_MASK;
-							buffer[4] = 0x84;
+							buffer[4] = VOID_PUMP_1_MASK | PISTON_2_MASK;
+							buffer[0] = 0x84;
 							wiringPiSPIDataRW(channel, buffer, 5);
 							usleep(2000000);
 
 							// release atoms
-							buffer[0] = PISTON_2_MASK;
-							buffer[4] = 0x84;
+							buffer[4] = PISTON_2_MASK;
+							buffer[0] = 0x84;
 							wiringPiSPIDataRW(channel, buffer, 5);
 							usleep(2000000);
 
-							// lift down dynamixel
-							dynamixelSetWheelMode(DYNAMIXEL_ELEVATOR_ID);
-							dynamixelSetVelocity(DYNAMIXEL_ELEVATOR_ID, 0x3ff);
-							usleep(1.75 * 1000000);
-							dynamixelSetVelocity(DYNAMIXEL_ELEVATOR_ID, 0);
+							//// lift down dynamixel
+							//dynamixelSetWheelMode(DYNAMIXEL_ELEVATOR_ID);
+							//dynamixelSetVelocity(DYNAMIXEL_ELEVATOR_ID, 0x3ff);
+							//usleep(1.75 * 1000000);
+							//dynamixelSetVelocity(DYNAMIXEL_ELEVATOR_ID, 0);
 
 							break;
+
+						case SDLK_8:
+							// piston 3 +, pump 2 on
+							buffer[4] = VOID_PUMP_2_MASK | PISTON_3_MASK;
+							buffer[0] = 0x84;
+							wiringPiSPIDataRW(channel, buffer, 5);
+							usleep(2000000);
+
+							// piston 3 -, pump 2 on
+							buffer[4] = PISTON_3_MASK;
+							buffer[0] = 0x84;
+							wiringPiSPIDataRW(channel, buffer, 5);
+							usleep(2000000);
+
+							// piston 3 -, pump 2 on
+							buffer[4] = VOID_PUMP_2_MASK | PISTON_3_MASK;
+							buffer[0] = 0x84;
+							wiringPiSPIDataRW(channel, buffer, 5);
+							usleep(2000000);
 
 						default : break;
                     }
