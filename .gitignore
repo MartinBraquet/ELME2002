@@ -18,4 +18,6 @@
 *.jic
 *.sof
 *.map
+*.qws
+*.cdf
 Kraken/build/main
