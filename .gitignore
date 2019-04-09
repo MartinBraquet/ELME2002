@@ -20,4 +20,7 @@
 *.map
 *.qws
 *.cdf
+*.cof
+Quartus/pourAvoirUnPointJIC.cof
+Quartus/c5_pin_model_dump.txt
 Kraken/build/main
