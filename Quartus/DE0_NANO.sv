@@ -138,20 +138,18 @@ assign reset = GPIO_0_PI[0];
 
 logic	spi_clk, spi_cs, spi_mosi, spi_miso;
 logic MemWriteM;
-logic [31:0] DataAdrM, WriteDataM, spi_data;
-logic  signalrasp;
-
-assign MemWriteM = 1; //This is used to always update the value from the output register.
+logic [31:0] DataAdrM, WriteDataM;
+logic signalrasp;
 
 spi_slave spi_slave_instance(
 	.SPI_CLK    (spi_clk),
 	.SPI_CS     (spi_cs),
 	.SPI_MOSI   (spi_mosi),
 	.SPI_MISO   (spi_miso),
-	.Data_WE    (MemWriteM & cs_spi),
+	.Data_WE    (cs_spi),
 	.Data_Addr  (DataAdrM),
 	.Data_Write (WriteDataM),
-	.Data_Read  (spi_data),
+	.Data_Read  (ReadDataM),
 	.Clk        (clk)
 );
 
@@ -172,9 +170,8 @@ logic [31:0] commandPneumaticSPI;
 //  START pin
 //=======================================================
 
-assign GPIO_1[0] = 0;
-
 logic start_RPI;
+assign GPIO_1[0] = 0;
 assign start_RPI = GPIO_1_IN[0];
 
 //=======================================================
@@ -206,16 +203,24 @@ assign GPIO_1[2] 	= RPi_UART_DIR;
 logic valve1, valve2, piston1, piston2, piston3; 
 logic resetPneumatic;
 
-//assign GPIO_1[14] = 1'b0;//valve1 ;
-//assign GPIO_1[20] = 1'b0;//valve2 ;
-//assign GPIO_1[16] = 1'b0;//piston1;
-//assign GPIO_1[18] = 1'b0;//piston2;
-//assign GPIO_1[22] = 1'b0;// piston3;
+//assign GPIO_1[14] = 1'b0; // valve1
+//assign GPIO_1[20] = 1'b0; // valve2
+//assign GPIO_1[16] = 1'b0; // piston1
+//assign GPIO_1[18] = 1'b0; // piston2
+//assign GPIO_1[22] = 1'b0; // piston3
+
 assign GPIO_1[14] = commandPneumaticSPI[0]; // valve1
-assign GPIO_1[20] = commandPneumaticSPI[1]; // valve2
-assign GPIO_1[16] = commandPneumaticSPI[2]; // piston1
-assign GPIO_1[18] = commandPneumaticSPI[3]; // piston2
+assign GPIO_1[16] = commandPneumaticSPI[1]; // piston1
+assign GPIO_1[18] = commandPneumaticSPI[2]; // piston2
+assign GPIO_1[20] = commandPneumaticSPI[3]; // valve2
 assign GPIO_1[22] = commandPneumaticSPI[4]; // piston3
+
+
+assign GPIO_1[1] = commandPneumaticSPI[0]; // valve1
+assign GPIO_1[3] = commandPneumaticSPI[1]; // piston1
+assign GPIO_1[13] = commandPneumaticSPI[2]; // piston2
+assign GPIO_1[15] = commandPneumaticSPI[3]; // valve2
+assign GPIO_1[17] = commandPneumaticSPI[4]; // piston3
 
 //logic [31:0] counter1;
 //counterUltrasonic my_count(.clk(clk),
@@ -280,7 +285,7 @@ logic [31:0]	enc_counter_LEFT_WHEEL_M, enc_counter_RIGHT_WHEEL_M,enc_counter_LEF
 logic 			reset_enc_LEFT_WHEEL, reset_enc_RIGHT_WHEEL;
 logic 			RaE, RbE, LaE, LbE, RaO, Rbo, LaO, LbO;
 
-// signals a and b for the encorders
+// signals a and b for the encoders
 assign LaE = GPIO_1[27];
 assign LbE = GPIO_1[25];
 assign RaE = GPIO_1[21];
@@ -331,13 +336,7 @@ assign MemWriteM = 1'b1;
 
 
 // Chip Select logic
-// For the moment we only use SPI, need a logic if we want to read a value from an input register
 assign cs_spi    = 1'b1;  
-
-// Read Data
-always_comb // Not very useful yet, can become useful is we want to readData from multiple sources
-	if (cs_spi) ReadDataM = spi_data;
-	else ReadDataM = 32'b0;
 
 // Adress for the SPIRegister
 // The count goes up to 16 to link the 16 register, can be increased if needed
@@ -407,11 +406,8 @@ always_ff @ (posedge clk, posedge reset)
 // To use the LED	
 always_ff@(posedge clk)
 begin
-	led_reg[4:2] = enc_counter_LEFT_WHEEL_O[2:0];
-	led_reg[7:5] = enc_counter_RIGHT_WHEEL_O[2:0];
-	led_reg[1] = GPIO_1[0];
-	led_reg[0] = GPIO_1_IN[0];
-	
+	led_reg[7:6] = {RaE, RbE};
+	led_reg[5:0] = commandPneumaticSPI[5:0];
 end
 endmodule
 
