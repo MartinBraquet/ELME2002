@@ -6,16 +6,16 @@ module rotation_speed(
 
 
 logic [31:0] angle_before, angle_after;
-logic [15:0] count;
+logic [19:0] count;
 
 assign omega = angle_after - angle_before;
 	
 always_ff @ (posedge clk)
-	if (reset) count <= 16'd0;
+	if (reset) count <= 20'd0;
 	else count <= count + 1;
 	
 always_ff @ (posedge clk)
-	if (count == 16'd0) 
+	if (count == 20'd0) 
 		begin
 			angle_after  <= angle;
 			angle_before <= angle_after;
