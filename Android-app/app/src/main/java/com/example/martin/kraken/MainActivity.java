@@ -2,15 +2,10 @@ package com.example.martin.kraken;
 
 import android.content.Context;
 import android.os.Bundle;
-import android.util.Log;
-import android.widget.Button;
 import android.widget.TextView;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 
 
 import android.hardware.Sensor;
@@ -20,18 +15,13 @@ import android.hardware.SensorManager;
 
 import io.github.controlwear.virtual.joystick.android.JoystickView;
 
-import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.List;
 
 import android.os.AsyncTask;
 import android.app.Activity;
-import android.view.View;
-import android.view.View.OnClickListener;
 import android.widget.EditText;
 import android.widget.ToggleButton;
 
@@ -43,7 +33,7 @@ public class MainActivity extends Activity {
     TextView textResponse, textData;
     EditText editTextAddress, editTextPort;
     ToggleButton buttonConnect, toggleButton_use_joystick, toggleButton_pump_low, toggleButton_pump_high, toggleButton_piston_low1, toggleButton_piston_low2, toggleButton_piston_high;
-    int robot_angle, robot_strength, connexion;
+    int robot_angle, robot_strength;
     int received_buffer[];
 
     @Override
@@ -225,7 +215,7 @@ public class MainActivity extends Activity {
             String output = "";
             for (int i=0; i<4; i++)
                 output += received_buffer[i] + "   ";
-            textResponse.setText("Message for Kraken:   " + output);
+            textResponse.setText("Message from Kraken:   " + output);
         }
     };
 
