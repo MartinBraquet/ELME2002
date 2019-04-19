@@ -34,7 +34,7 @@ public class MainActivity extends Activity {
     EditText editTextAddress, editTextPort;
     ToggleButton buttonConnect, toggleButton_use_joystick, toggleButton_pump_low, toggleButton_pump_high, toggleButton_piston_low1, toggleButton_piston_low2, toggleButton_piston_high;
     int robot_angle, robot_strength;
-    int received_buffer[];
+    int received_buffer[], sent_buffer[];
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,6 +87,7 @@ public class MainActivity extends Activity {
         editTextPort.setText("5550");
 
         received_buffer = new int[4];
+        sent_buffer = new int[4];
 
         JoystickView joystick = findViewById(R.id.joystickView);
         joystick.setOnMoveListener(new JoystickView.OnMoveListener() {
@@ -117,7 +118,7 @@ public class MainActivity extends Activity {
         String dstAddress;
         int dstPort;
         int response;
-        byte[] buffer;
+        byte[] msent_buffer, m_received_buffer;
 
         MyClientTask(String addr, int port){
             dstAddress = addr;
@@ -131,34 +132,34 @@ public class MainActivity extends Activity {
                 if (socket.isConnected()) {
                     OutputStream out = socket.getOutputStream();
                     InputStream in = socket.getInputStream();
-                    buffer = new byte[4];
+                    msent_buffer = new byte[4];
                     if (buttonConnect.isChecked()) {
-                        buffer[3] = (byte) 1;
+                        msent_buffer[3] = (byte) 1;
                     } else {
-                        buffer[3] = 0;
+                        msent_buffer[3] = 0;
                     }
                     if (toggleButton_piston_high.isChecked()) {
-                        buffer[3] += (int) 4;
+                        msent_buffer[3] += (int) 32;
                     }
                     if (toggleButton_piston_low1.isChecked()) {
-                        buffer[3] += (int) 8;
+                        msent_buffer[3] += (int) 16;
                     }
                     if (toggleButton_piston_low2.isChecked()) {
-                        buffer[3] += (int) 16;
+                        msent_buffer[3] += (int) 8;
                     }
                     if (toggleButton_pump_high.isChecked()) {
-                        buffer[3] += (int) 32;
+                        msent_buffer[3] += (int) 4;
                     }
                     if (toggleButton_pump_low.isChecked()) {
-                        buffer[3] += (int) 64;
+                        msent_buffer[3] += (int) 2;
                     }
 
-                    buffer[2] = (byte) (robot_angle / 256);
-                    buffer[1] = (byte) (robot_angle % 256);
-                    buffer[0] = (byte) robot_strength;
-                    out.write(buffer,0, buffer.length);
-                    buffer = new byte[4];
-                    in.read(buffer, 0, buffer.length);
+                    msent_buffer[2] = (byte) (robot_angle / 256);
+                    msent_buffer[1] = (byte) (robot_angle % 256);
+                    msent_buffer[0] = (byte) robot_strength;
+                    out.write(msent_buffer,0, msent_buffer.length);
+                    m_received_buffer = new byte[4];
+                    in.read(m_received_buffer, 0, m_received_buffer.length);
                     out.flush();
                     out.close();
                     in.close();
@@ -177,8 +178,10 @@ public class MainActivity extends Activity {
         @Override
         protected void onPostExecute(Void result) {
             try {
-                for (int i=0; i<4; i++)
-                    received_buffer[i] = (int) buffer[i];
+                for (int i=0; i<4; i++) {
+                    received_buffer[i] = (int) m_received_buffer[i];
+                    sent_buffer[i] = (int) msent_buffer[i];
+                }
             } catch (Exception e) {}
             super.onPostExecute(result);
         }
@@ -210,12 +213,14 @@ public class MainActivity extends Activity {
                         editTextAddress.getText().toString(),
                         Integer.parseInt(editTextPort.getText().toString()));
                 myClientTask.execute();
-            }
 
-            String output = "";
-            for (int i=0; i<4; i++)
-                output += received_buffer[i] + "   ";
-            textResponse.setText("Message from Kraken:   " + output);
+                String output = "", input = "";
+                for (int i=0; i<4; i++) {
+                    output += received_buffer[i] + "   ";
+                    input += sent_buffer[i] + "   ";
+                }
+                textResponse.setText("Message to Kraken:    " + input + "\nMessage from Kraken:   " + output);
+            }
         }
     };
 
