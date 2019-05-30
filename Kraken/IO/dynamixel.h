@@ -39,7 +39,8 @@ typedef unsigned char Byte; //integer of 8 bits
 #define ON 		1
 #define OFF 	0
 
-#define DYNAMIXEL_ELEVATOR_ID	0xFE
+#define DYNAMIXEL_ELEVATOR_ID		0x02
+#define DYNAMIXEL_ATOM_PUSHER_ID	0x01
 
 #define ANG_VEL_STD			0x300		// 0x300 = 108RPM = 18deg/s
 #define ANG_VEL_114_RPM		0x3ff

@@ -21,15 +21,15 @@ typedef struct RobotPosition
 
 	double last_t; ///< last time odometry was updated
 	
-	double pos_covariance[3][3];	/// covariance of position with order x,y,theta
-	double pos_covariance_triang[3][3];	/// covariance of position due to triangulation with order x,y,theta
+	double pos_covariance[3][3];	///< covariance of position with order x,y,theta
+	double pos_covariance_triang[3][3];	///< covariance of position due to triangulation with order x,y,theta
 	
-	double odo_l_wheel_last_angle; /// last angle for odometry update
+	double odo_l_wheel_last_angle; ///< last angle for odometry update
 	double odo_r_wheel_last_angle;
 
 } RobotPosition;
 
 // function prototype
-void set_init_position(int robot_id, RobotPosition *rob_pos);
+void set_init_position(int plus_or_minus, RobotPosition *rob_pos);
 
 #endif

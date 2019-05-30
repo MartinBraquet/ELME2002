@@ -6,7 +6,8 @@
 #ifndef _CTRL_IO_H_
 #define _CTRL_IO_H_
 
-#include <sweep/sweep.h>
+#include <stdlib.h>
+#include "rplidar.h"
 
 // number of micro-switches
 #define NB_U_SWITCH 2
@@ -14,7 +15,7 @@
 // number of stored rising/falling edges
 #define NB_STORE_EDGE 10
 
-#define LIDAR_SAMPLES 1000
+#define LIDAR_SAMPLES 2000
 
 // ID of the right and left sides
 enum{R_ID, L_ID};
@@ -47,20 +48,15 @@ typedef struct CtrlIn
 	 */
 	int u_switch[NB_U_SWITCH]; ///< 1 if corresponding u_switch (R_ID or L_ID) is activated, 0 otherwise
 
+	int start_RPI; ///< 0 if the jumper is connected to the interface card
 
 	// LIDAR data
-	sweep_error_s error;
-	sweep_device_s sweep;
 	double lidar_angles[LIDAR_SAMPLES];
 	double lidar_distances[LIDAR_SAMPLES];
 	int lidar_signals[LIDAR_SAMPLES];
+	int lidar_count;
 	
-	double lidar_mean_angles[5];
-	double lidar_mean_distances[5];
-	
-	double relative_theta_opp;
-	int opp_detected;
-	double dist_opp;
+	rp::standalone::rplidar::RPlidarDriver *drv;
 
 } CtrlIn;
 
@@ -79,6 +75,12 @@ typedef struct CtrlOut
 	 *    100 corresponds to +0.9*24 V
 	 */
 	double wheel_commands[2]; ///< wheel motors (R_ID or L_ID) commands [-], bounded in [-100 ; 100]
+	int pneumatic_commands;
+	unsigned char next_action;
+	unsigned char action_in_progress;
+	unsigned char action_finished;
+	
+	int score;
 
 } CtrlOut;
 

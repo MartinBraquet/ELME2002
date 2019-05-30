@@ -2,10 +2,12 @@
 #include "localization/init_pos_gr3.h"
 #include "localization/odometry_gr3.h"
 #include "localization/opp_pos_gr3.h"
+#include "localization/lidar.h"
 #include "regulation/speed_regulation_gr3.h"
 #include "regulation/speed_controller_gr3.h"
 #include "strategy/strategy_gr3.h"
 #include "path/path_planning_gr3.h"
+
 
 
 /*! \brief initialize the controller structure
@@ -32,10 +34,8 @@ CtrlStruct* init_CtrlStruct(CtrlIn *inputs, CtrlOut *outputs)
 
 	// states
 	cvs->main_state = 0;
-
-	// IDs
-    cvs->robot_team = TEAM_YELLOW;
-    cvs->plus_or_minus = 1;
+	
+	cvs->started = 0;
 
 	// robot position
 	cvs->rob_pos = (RobotPosition*) malloc(sizeof(RobotPosition));
@@ -48,8 +48,8 @@ CtrlStruct* init_CtrlStruct(CtrlIn *inputs, CtrlOut *outputs)
 	cvs->opp_pos->nb_opp = 1;
 	for(i=0; i<2; i++)
 	{
-		cvs->opp_pos->x[i] = 0.0;
-		cvs->opp_pos->y[i] = 0.0;
+		cvs->opp_pos->x[i] = 10.0;
+		cvs->opp_pos->y[i] = 10.0;
 	}
 
 	// speed regulation
@@ -59,7 +59,7 @@ CtrlStruct* init_CtrlStruct(CtrlIn *inputs, CtrlOut *outputs)
 
 	// strategy
 	cvs->strat = (Strategy*) malloc(sizeof(Strategy));
-	cvs->strat->state = STRAT_STATE_1;
+	cvs->strat->mini_state = 0;
 
 	// path-planning
 	cvs->path = (PathPlanning*) malloc(sizeof(PathPlanning));
@@ -69,15 +69,21 @@ CtrlStruct* init_CtrlStruct(CtrlIn *inputs, CtrlOut *outputs)
 	
 	// robot dimensions
 	cvs->robot_dimensions = (Robot_dimensions*) malloc(sizeof(Robot_dimensions));
-
+	
+	// LIDAR data
+	cvs->lidar_data = (LIDAR_data*) malloc(sizeof(LIDAR_data));
+	
     cvs->robot_dimensions->radius = 0.13; // [m]
     cvs->robot_dimensions->wheel_radius = 0.025; // [m]
-    cvs->robot_dimensions->odo_wheel_radius = 0.024; // [m]
-    cvs->robot_dimensions->wheel_axle = 0.32; // [m]
-    cvs->robot_dimensions->lidar_distance = 0.0; // [m]
+    cvs->robot_dimensions->odo_wheel_radius = 0.0225; // [m]
+    cvs->robot_dimensions->wheel_axle = 0.322; // [m]
+    cvs->robot_dimensions->lidar_distance = 0.01; // [m]
     cvs->robot_dimensions->beacon_radius = 0.04; // [m]
     cvs->robot_dimensions->microswitch_distance = 0.09; // [m]
-      
+   
+    // data to save 
+    cvs->save = (SaveFileStruct*) malloc(sizeof(SaveFileStruct));
+    saveResults_init(cvs->save);
 	return cvs;
 }
 
@@ -95,7 +101,10 @@ void free_CtrlStruct(CtrlStruct *cvs)
 	free(cvs->rob_pos);
 	free(cvs->motor_str);
 	free(cvs->robot_dimensions);
-
+	free(cvs->lidar_data);
+	saveResults_finish(cvs->save);
+	free(cvs->save);
+	
 	free(cvs);
 	
 	printf("Free CtrlStruct\n");

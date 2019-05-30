@@ -1,1 +1,1 @@
-cd .. && find . -exec touch {} + && cd build && make clean
+cd .. && sudo find . -exec touch {} + && cd build && make clean

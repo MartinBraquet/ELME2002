@@ -9,9 +9,11 @@
 #include "../CtrlStruct_gr3.h"
 #include <math.h>
 
+#define NB_STRAT 1
+
 
 // strategy main states
-enum {STRAT_STATE_1, STRAT_STATE_2, STRAT_STATE_3, STRAT_STATE_4};
+enum {STRAT_STATE_1, STRAT_STATE_2, STRAT_STATE_3, STRAT_STATE_4, STRAT_STATE_5};
 
 enum {MINI_STRAT_STATE_1, MINI_STRAT_STATE_2, MINI_STRAT_STATE_3};
 enum {MINI_STRAT_STRAIGHT_LINE, MINI_STRAT_ROTATE_LEFT, MINI_STRAT_STRAIGHT_LINE_BACK, MINI_STRAT_STRAIGHT_LINE_TOP, MINI_STRAT_ROTATE_RIGHT, MINI_STRAT_ROTATE_RIGHT2, MINI_STRAT_WAIT_END};
@@ -29,6 +31,8 @@ void main_strategy(CtrlStruct *cvs);
 void round_trip(CtrlStruct *cvs, int mini_state);
 void full_speed(CtrlStruct *cvs, int mini_state);
 void obstacles_avoidance(CtrlStruct *cvs);
+void strategy_1(CtrlStruct *cvs, int mini_state);
+
 
 #endif
 

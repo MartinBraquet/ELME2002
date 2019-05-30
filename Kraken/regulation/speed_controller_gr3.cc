@@ -13,9 +13,9 @@ double compute_angle_wheel_motor(int count){
 	return (count * 360 / 37750) * M_PI / 180;
 }
 
-// Rotation speed of the motor wheels in rad/s: compute each 65536 cycles and the CLK is at 50 MHz
+// Rotation speed of the motor wheels in rad/s: compute each 1048576 cycles and the CLK is at 50 MHz
 double compute_speed_wheel_motor(int speed){
-	return (speed * 2 * M_PI / 37750 / 65536.0 * 50e6);
+	return (speed * 2.0 * M_PI / 37750.0 / 1048576.0 * 50e6);
 }
 
 // Angle of the odometers in rad
@@ -25,7 +25,7 @@ double compute_angle_wheel_odo(int count){
 
 // Rotation speed of the odometers in rad/s: compute each 65536 cycles and the CLK is at 50 MHz
 double compute_speed_wheel_odo(int speed){
-	return (speed * 2 * M_PI / 8192 / 65536.0 * 50e6);
+	return (speed * 2.0 * M_PI / 8192.0 / 1048576.0 * 50e6);
 }
 
 int saturation(double *x, double xsat){
@@ -98,8 +98,8 @@ void init_speed_controller(CtrlStruct *cvs){
     cvs->motor_str->l_motor = (Motor*) malloc(sizeof(struct Motor));
     cvs->motor_str->r_motor = (Motor*) malloc(sizeof(struct Motor));
 	
-	cvs->motor_str->l_motor->Ki = 0.3367;
-	cvs->motor_str->l_motor->Kp = 0.0415;
+	cvs->motor_str->l_motor->Ki = 0.8; //0.3367;
+	cvs->motor_str->l_motor->Kp = 0.08; //0.0415;
 	cvs->motor_str->l_motor->K = 1.0;
 	cvs->motor_str->l_motor->komega = 0.9998;
 	cvs->motor_str->l_motor->integral_error = 0.0;

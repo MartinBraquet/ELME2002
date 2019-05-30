@@ -19,6 +19,7 @@
 int checkPositionUpdateNeeded(CtrlStruct *cvs);
 void mergeSensorData(CtrlStruct *cvs);
 void recombineSensorData(CtrlStruct *cvs);
+void Kalman_filter(CtrlStruct *cvs);
 
 
 #endif

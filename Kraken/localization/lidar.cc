@@ -7,101 +7,85 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "../CtrlStruct_gr3.h"
+#include "../useful/mytime.h"
 
-#include <sweep/sweep.h>
+#include "lidar.h"
+#include "rplidar.h"
 
-// Utility functions for error handling: we simply shut down here; you should do a better job
-void die(sweep_error_s error) {
-	assert(error);
-	fprintf(stderr, "LIDAR Error: %s. Probably not connected...\n", sweep_error_message(error));
-	sweep_error_destruct(error);
-	exit(EXIT_FAILURE);
-}
+using namespace rp::standalone::rplidar;
 
 void init_LIDAR(CtrlStruct *cvs) {
 
   CtrlIn *inputs = cvs->inputs;
-
-  // Makes sure the installed library is compatible with the interface
-  assert(sweep_is_abi_compatible());
-
-  // Grab the port name from the input argument
-  const char* port = "/dev/ttyUSB0";
-
-  // All functions which can potentially fail write into an error object
-  sweep_error_s error = NULL;
-
-  // Create a Sweep device from the specified USB serial port; there is a second constructor for advanced usage
-  sweep_device_s sweep = sweep_device_construct_simple(port, &error);
-  if (error) die(error);
-
-  // The Sweep's rotating speed in Hz
-  sweep_device_set_motor_speed(sweep, 2, &error);
-  int32_t speed = sweep_device_get_motor_speed(sweep, &error);
-  if (error) die(error);
-
-  fprintf(stdout, "Motor Speed Setting: %" PRId32 " Hz\n", speed);
-
-  // The Sweep's sample rate in Hz
-  sweep_device_set_sample_rate(sweep, LIDAR_SAMPLES, &error);
-  int32_t rate = sweep_device_get_sample_rate(sweep, &error);
-  if (error) die(error);
-
-  fprintf(stdout, "Sample Rate Setting: %" PRId32 " Hz\n", rate);
-
-  inputs->sweep = sweep;
-  inputs->error = error;
+  
+  const char * opt_com_path = "/dev/ttyUSB0";
+  
+  // create the driver instance
+  RPlidarDriver * drv = RPlidarDriver::CreateDriver(DRIVER_TYPE_SERIALPORT);
+  
+  if(!drv)
+      drv = RPlidarDriver::CreateDriver(DRIVER_TYPE_SERIALPORT);
+  if(IS_OK(drv->connect(opt_com_path, 115200)))
+  {
+      rplidar_response_device_info_t devinfo;
+      if (IS_OK(drv->getDeviceInfo(devinfo))) 
+      {
+	  fprintf(stderr, "Error, cannot bind to the specified serial port %s.\n"
+	      , opt_com_path);
+      }
+      else
+      {
+	  delete drv;
+	  drv = NULL;
+      }
+  }
+  
+  drv->startMotor();
+  drv->startScan(0,1);
+  
+  inputs->drv = drv;
+  
 }
  
 void get_LIDAR_data(CtrlStruct *cvs) {
 
 	CtrlIn *inputs = cvs->inputs;
+	RPlidarDriver *drv = inputs->drv;
 
-	sweep_error_s error = inputs->error;
-	sweep_device_s sweep = inputs->sweep;
+        rplidar_response_measurement_node_t nodes[8192];
+        size_t   count = _countof(nodes);
 
-	sweep_device_start_scanning(sweep, &error);
-	if (error) die(error);
-
-	// Let's do 10 full 360 degree scans
-	//for (int32_t num_scans = 0; num_scans < 1; ++num_scans) {
-		// This blocks until a full 360 degree scan is available
-	sweep_scan_s scan = sweep_device_get_scan(sweep, &error);
-        if (error) die(error);
-
-    // int* angle_table = malloc(sizeof(int));
-
-    // For each sample in a full 360 degree scan print angle and distance.
-    // In case you're doing expensive work here consider using a decoupled producer / consumer pattern.
-	for (int32_t n = 0; n < LIDAR_SAMPLES; ++n) {
-		inputs->lidar_signals[n] = (int) sweep_scan_get_signal_strength(scan, n);
-		if (inputs->lidar_signals[n] > 40) {
-		  inputs->lidar_angles[n]    = (double) (sweep_scan_get_angle(scan, n) % 360000) * M_PI / 180000.0;
-		  inputs->lidar_distances[n] = (double) sweep_scan_get_distance(scan, n) / 100.0;
-		  //printf("%f, %f, %d\n", inputs->lidar_angles[n], inputs->lidar_distances[n], inputs->lidar_signals[n]);
-		  //printf("LIDAR: Angle %f [rad], Distance %f [m], Signal Strength: %d\n", inputs->lidar_angles[n], inputs->lidar_distances[n], inputs->lidar_signals[n]);
+        if (IS_OK(drv->grabScanData(nodes, count))) {
+            drv->ascendScanData(nodes, count);
+            for (int pos = 0; pos < (int)count ; ++pos) {
+                /*printf("%s theta: %03.2f Dist: %08.2f Q: %d \n", 
+                    (nodes[pos].sync_quality & RPLIDAR_RESP_MEASUREMENT_SYNCBIT) ?"S ":"  ", 
+                    (nodes[pos].angle_q6_checkbit >> RPLIDAR_RESP_MEASUREMENT_ANGLE_SHIFT)/64.0f,
+                    nodes[pos].distance_q2/4.0f,
+                    nodes[pos].sync_quality >> RPLIDAR_RESP_MEASUREMENT_QUALITY_SHIFT);*/
+		
+		inputs->lidar_signals[pos] = (int) (nodes[pos].sync_quality >> RPLIDAR_RESP_MEASUREMENT_QUALITY_SHIFT);
+		if (inputs->lidar_signals[pos] > 0) {
+		  inputs->lidar_distances[pos] = (double) (nodes[pos].distance_q2/4000.0f);
+		  inputs->lidar_angles[pos]     = (double) (-(nodes[pos].angle_q6_checkbit >> RPLIDAR_RESP_MEASUREMENT_ANGLE_SHIFT)/11520.0f * M_PI) + M_PI + 1.5 * M_PI / 180.0;
 		} else {
-		  inputs->lidar_angles[n]    = 0.0;
-		  inputs->lidar_distances[n] = 0.0;
+		  inputs->lidar_angles[pos]    = 0.0;
+		  inputs->lidar_distances[pos] = 99.0;
 		}
-		//printf("LIDAR: Angle %f [rad], Distance %f [m], Signal Strength: %d\n", inputs->lidar_angles[n], inputs->lidar_distances[n], inputs->lidar_signals[n]);
-		//printf("%f, %f, %d\n", inputs->lidar_angles[n], inputs->lidar_distances[n], inputs->lidar_signals[n]);
-	}
-
-	// Cleanup scan response
-	sweep_scan_destruct(scan);
-
-    //}
+		//printf("Get LIDAR data: %d %f %f\n", inputs->lidar_signals[pos], inputs->lidar_angles[pos] * 180 / M_PI, inputs->lidar_distances[pos]);
+            }
+	    //printf("LIDAR count: %d\n", count);
+	    inputs->lidar_count = count;
+        }
 }
 
 void free_LIDAR(CtrlStruct *cvs) {
 
   CtrlIn *inputs = cvs->inputs;
-
-  // Stop capturing scans
-  sweep_device_stop_scanning(inputs->sweep, &inputs->error);
-  if (inputs->error) die(inputs->error);
-
-  // Shut down and cleanup Sweep device
-  sweep_device_destruct(inputs->sweep);
+  RPlidarDriver *drv = inputs->drv;
+  
+  drv->stop();
+  drv->stopMotor();
+  RPlidarDriver::DisposeDriver(drv);
+  
 }

@@ -1,4 +1,4 @@
-LIBS = -lwiringPi -lsweep -lpthread -lSDL2
+LIBS = -lwiringPi -lsweep -lpthread -lSDL2 -O2 -lrt -lstdc++ -funsigned-char -I/home/pi/Desktop/ELME2002/Kraken/IO/RPLIDAR/include -I/home/pi/Desktop/ELME2002/Kraken/IO/RPLIDAR/src
 CC = g++
 OPTS = -Wall
 # Directories
@@ -16,10 +16,10 @@ OBJS    = $(patsubst $(SRCDIR)/%.cc,$(OBJDIR)/%.o,$(SRCS))
 
 # Targets
 main: $(OBJS)
-	$(CC) $(OBJS) $(LIBS) -o $@
+	$(CC) $(OBJS) ../IO/RPLIDAR/librplidar_sdk.a $(LIBS) -o $@
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cc
-	$(CC) $(OPTS) -c $< -o $@
+	$(CC) $(LIBS) $(OPTS) -c $< -o $@
 
 clean:
 	rm $(OBJS) -rf

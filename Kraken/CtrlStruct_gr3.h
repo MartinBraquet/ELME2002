@@ -16,6 +16,7 @@
 #include "IO/COM/CAN/CAN.hh"
 #include "IO/COM/SPI/Specific/SPI_CAN.hh"
 #include "IO/COM/SPI/SPI.hh"
+#include "results/saveResult.h"
 
 /// main states
 enum {WAIT_INIT_STATE, RUN_STATE, STOP_END_STATE, NB_MAIN_STATES};
@@ -43,6 +44,8 @@ typedef struct OpponentsPosition OpponentsPosition;
 typedef struct PathPlanning PathPlanning;
 typedef struct Strategy Strategy;
 typedef struct MotorStruct MotorStruct;
+typedef struct LIDAR_data LIDAR_data;
+typedef struct SaveFileStruct;
 
 /// Dimensions of the robot
 typedef struct Robot_dimensions
@@ -69,10 +72,16 @@ typedef struct CtrlStruct
 	Strategy *strat; ///< strategy
 	MotorStruct *motor_str; ///< motors structure
 	Robot_dimensions *robot_dimensions; ///< robot dimensions
-
+	LIDAR_data *lidar_data;
+    SaveFileStruct *save;
+    
 	int main_state; ///< main state
-	int robot_team;    ///< ID of the team
 	int plus_or_minus;    ///< ID of the team
+	
+	int robot_team;    ///< ID of the team
+	int main_strategy;    ///< ID of the team
+	
+	int started;
 
 	int keyboard;    ///< Keyboard mode
 	int stop_lidar;    ///< Keyboard mode

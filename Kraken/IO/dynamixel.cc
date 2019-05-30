@@ -54,7 +54,7 @@ void dynamixelReboot(char ID) {
 ///////////////////////////////////////////////////////////
 
 void dynamixelWriteLed(char ID, char status) {
-	printf("trying to turn on/off led...\n");
+	//printf("trying to turn on/off led...\n");
 
 	send4ByteMessage(ID, INSTR_WRITE, LED_REG, status);
 
@@ -95,7 +95,7 @@ void dynamixelSetRelativeGoalPositionDeg(char ID, double goal_position_deg) {
 	}
 
 	dynamixelSetWheelMode(ID);
-	printf("velocity: %d     time_actuation_s: %f1.4\n", velocity, time_actuation_s);
+	//printf("velocity: %d     time_actuation_s: %f1.4\n", velocity, time_actuation_s);
 
 	// starts the motor
 	dynamixelSetVelocity(ID, velocity);
@@ -128,7 +128,7 @@ void dynamixelSetGoalPositionDeg(char ID, double goal_position_deg) {
 	if (goal_position_deg >= 0 && goal_position_deg <= 0) {
 
 		dynamixelSetJointMode(ID);
-		sleep(0.1);
+		usleep(100000);
 
 		//converting from deg to unity at memory (1 = 0.29 deg)
 		short int goal_position = (short int)(goal_position_deg * 3.448);
@@ -152,11 +152,9 @@ void dynamixelSetGoalPositionDeg(char ID, double goal_position_deg) {
 void dynamixelSetGoalPosition(char ID, short int goal_position) {
 
 	if (goal_position >= 0 && goal_position <= 0x3ff) {
-		//converting from deg to unity at memory (1 = 0.29 deg)
-		printf("trying to write: %02hhX %02hhX\n", (char)goal_position, (char)(goal_position >> 8));
+		//printf("trying to write: %02hhX %02hhX\n", (char)goal_position, (char)(goal_position >> 8));
 
 		send5ByteMessage(ID, INSTR_WRITE, GOAL_POSITION_REG, (char)goal_position, (char)(goal_position >> 8));
-		//	send5ByteMessage(ID, INSTR_WRITE, MOVING_SPEED_REG, (char) goal_position, (char) (goal_position >> 8) );
 	}
 	sleep(0.1);
 
@@ -173,7 +171,7 @@ void dynamixelSetGoalPosition(char ID, short int goal_position) {
 
 void dynamixelSetVelocity(char ID, short int velocity) {
 
-	printf("trying to write: %02hhX %02hhX\n", (char)velocity, (char)(velocity >> 8));
+	//printf("trying to write: %02hhX %02hhX\n", (char)velocity, (char)(velocity >> 8));
 
 	send5ByteMessage(ID, INSTR_WRITE, MOVING_SPEED_REG, (char)velocity, (char)(velocity >> 8));
 
@@ -209,17 +207,15 @@ void dynamixelSetJointMode(char ID) {
 ///////////////////////////////////////////////////////////
 void dynamixelSetWheelMode(char ID) {
 
-	sleep(0.2);
-
 	// sets CW angle limit to 0x0000
 	send5ByteMessage(ID, INSTR_WRITE, CW_ANGLE_LIMIT_REG, 0x00, 0x00);
 
-	sleep(0.2);
+	usleep(100000);
 
 	// sets CCW angle limit to 0x000
 	send5ByteMessage(ID, INSTR_WRITE, CCW_ANGLE_LIMIT_REG, 0x00, 0x00);
 
-	sleep(0.2);
+	usleep(100000);
 
 }
 /****************************************************/
@@ -256,6 +252,7 @@ void UARTSetup() {
 	{
 		//ERROR - CAN'T OPEN SERIAL PORT
 		printf("Error - Unable to open UART.  Ensure it is not in use by another application\n");
+		return;
 	}
 
 	//CONFIGURE THE UART
@@ -278,6 +275,8 @@ void UARTSetup() {
 	tcsetattr(uart0_filestream, TCSANOW, &options);
 
 	close(uart0_filestream);
+	printf("UART initialized\n");
+
 }
 
 ///////////////////////////////////////////////////////////
@@ -351,7 +350,7 @@ void send4ByteMessage(char ID, char instruction, char param1, char param2) {
 	*p_tx_buffer++ = checksum;
 
 	uart0_filestream = open(UART_DEVICE, O_RDWR | O_NOCTTY | O_NDELAY);		//Open in non blocking read/write mode
-	printf("\n\n\n uart0_filestream: %d \n\n\n", uart0_filestream);
+	//printf("\n\n\n uart0_filestream: %d \n\n\n", uart0_filestream);
 
 	if (uart0_filestream != -1)
 	{
@@ -403,7 +402,7 @@ void send3ByteMessage(char ID, char instruction) {
 		}
 	}
 
-	printf("\n\n\n uart0_filestream: %d \n\n\n", uart0_filestream);
+	//printf("\n\n\n uart0_filestream: %d \n\n\n", uart0_filestream);
 	close(uart0_filestream);
 
 }

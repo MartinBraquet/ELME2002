@@ -1,0 +1,30 @@
+
+// Make use of the CMake build system or compile manually, e.g. with:
+// gcc -std=c99 example.c -lsweep
+
+#ifndef _LIDAR_H_
+#define _LIDAR_H_
+
+#include <sweep/sweep.h>
+#include "../CtrlStruct_gr3.h"
+#include "../path/path_planning_gr3.h"
+
+typedef struct LIDAR_data
+{
+	double lidar_mean_angles[NB_BEACONS];
+	double lidar_mean_distances[NB_BEACONS];
+	
+	double relative_theta_opp;
+	int opp_detected;
+	double dist_opp;
+	
+	int nearest_indexes[NB_BEACONS];
+	
+} LIDAR_data;
+
+void die(sweep_error_s error);
+void init_LIDAR(CtrlStruct *cvs);
+void get_LIDAR_data(CtrlStruct *cvs);
+void free_LIDAR(CtrlStruct *cvs);
+
+#endif

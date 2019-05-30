@@ -11,28 +11,14 @@
  * \param[in] robot_id robot ID
  * \param[out] rob_pos robot position structure
  */
-void set_init_position(int robot_team, RobotPosition *rob_pos)
+void set_init_position(int plus_or_minus, RobotPosition *rob_pos)
 {
 	printf("Initial position\n");
 	
-	switch (robot_team)
-	{
-		case TEAM_YELLOW:
-			rob_pos->x = 0.0;
-			rob_pos->y = -1.37;
-			rob_pos->theta = M_PI / 2;
-			break;
-
-		case TEAM_PURPLE:
-			rob_pos->x = 0.0;
-			rob_pos->y = 1.37;
-			rob_pos->theta = -M_PI / 2;
-			break;
+	rob_pos->x = -0.50;
+	rob_pos->y = -1.19 * plus_or_minus;
 	
-		default:
-			printf("Initial position error: unknown robot team: %d !\n", robot_team);
-			exit(EXIT_FAILURE);
-	}	
+	rob_pos->theta = plus_or_minus * M_PI / 2;
 
 	rob_pos->odo_l_wheel_last_angle = 0.0;
 	rob_pos->odo_r_wheel_last_angle = 0.0;
@@ -42,9 +28,13 @@ void set_init_position(int robot_team, RobotPosition *rob_pos)
 	for (int i = 0; i < 3; i++) { 
 		for (int j = 0; j < 3; j++) {
 			rob_pos->pos_covariance[i][j] = 0;
-			rob_pos->pos_covariance_triang[i][j] = 0;
 		}
 	}
+	
+    rob_pos->pos_covariance_triang[0][0] = 4.865171097055174e-04;
+    rob_pos->pos_covariance_triang[1][1] = 0.003475816855762;
+    rob_pos->pos_covariance_triang[0][1] = -1.822367507852236e-04;
+    rob_pos->pos_covariance_triang[1][0] = rob_pos->pos_covariance_triang[0][1];
 }
 
 #if ROBOTICS_COURSE

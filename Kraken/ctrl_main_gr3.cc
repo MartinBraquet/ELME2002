@@ -12,13 +12,15 @@
 #include <cmath>
 #include "localization/init_pos_gr3.h"
 #include "localization/odometry_gr3.h"
+#include "localization/lidar.h"
 #include "localization/opp_pos_gr3.h"
 #include "regulation/speed_regulation_gr3.h"
 #include "regulation/speed_controller_gr3.h"
-#include "IO/dynamixel.h"
 #include "strategy/strategy_gr3.h"
 #include "path/path_planning_gr3.h"
-#include "simu_game_gr3.h"
+#include "IO/dynamixel.h"
+
+#define START_TIME 0.0
 
 
 /*! \brief initialize controller operations (called once)
@@ -53,6 +55,8 @@ void controller_init(CtrlStruct *cvs)
 	digitalWrite(resetPin,HIGH);
 	delay(50);
 	digitalWrite(resetPin,LOW);
+	
+	dynamixelSetup();
 
 	//Set the Can bus (Motor control)
 	cvs->can = new CAN(CAN_BR);
@@ -62,10 +66,11 @@ void controller_init(CtrlStruct *cvs)
 	//Set the SPI bus
 	int fd = wiringPiSPISetup(channel, clockSpi);
 	printf("SPI setup: %d \n",fd);
-
+	
+	cvs->outputs->pneumatic_commands = 0x00;
 
 	// robot position
-	set_init_position(cvs->robot_team, cvs->rob_pos);
+	set_init_position(cvs->plus_or_minus, cvs->rob_pos);
 	cvs->rob_pos->last_t = t;
 
 	// speed regulation
@@ -76,7 +81,6 @@ void controller_init(CtrlStruct *cvs)
 
 	// Map initialization
 	init_path_planning(cvs);
-
 
 }
 
@@ -119,8 +123,9 @@ void controller_loop(CtrlStruct *cvs)
 	{
 		case WAIT_INIT_STATE:
 			speed_regulation(cvs, 0.0, 0.0);
+			
 
-			if (t > 3.0)
+			if (t > START_TIME)
 			{
 				cvs->main_state = RUN_STATE;
 			}
@@ -137,6 +142,7 @@ void controller_loop(CtrlStruct *cvs)
 
 		case STOP_END_STATE:
 			speed_regulation(cvs, 0.0, 0.0);
+			printf("Match END\n");
 			break;
 	
 		default:
@@ -152,9 +158,6 @@ void controller_loop(CtrlStruct *cvs)
  */
 void controller_finish(CtrlStruct *cvs)
 {
+	
     printf("Control finish \n");
 }
-
-#if ROBOTICS_COURSE
-    NAMESPACE_CLOSE();
-#endif
